@@ -198,6 +198,17 @@ function App() {
     void inspect(id, '');
   }
 
+  function openRetryPage() {
+    if (caseData && caseId && caseData.case_id === caseId) {
+      setRetryEvidence(caseData.baseline_evidence.join('\n'));
+      setScanBaseline(caseData.baseline_evidence);
+      setScanCandidate([]);
+      setScanResult(null);
+      setScanPhase('idle');
+    }
+    setPage('retry');
+  }
+
   return <div className="appFrame">
     <header className="topbar">
       <button className="brandButton" onClick={() => setPage('overview')} aria-label="MeaningNonce overview">
@@ -220,7 +231,7 @@ function App() {
     <aside className="sidebar">
       <NavButton active={page==='overview'} icon="⌂" label="Overview" onClick={() => setPage('overview')} />
       <NavButton active={page==='seed'} icon="▤" label="Seed Case" onClick={() => setPage('seed')} />
-      <NavButton active={page==='retry'} icon="➤" label="Submit Retry" onClick={() => setPage('retry')} />
+      <NavButton active={page==='retry'} icon="➤" label="Submit Retry" onClick={openRetryPage} />
       <NavButton active={page==='resolve'} icon="◇" label="Resolve" onClick={() => setPage('resolve')} />
       <NavButton active={page==='inspect'} icon="⌕" label="Inspect Cases" onClick={() => setPage('inspect')} />
       <NavButton active={page==='evidence'} icon="</>" label="Runtime Proof" onClick={() => setPage('evidence')} />
@@ -239,7 +250,7 @@ function App() {
         validAddress={validAddress}
         explorerUrl={explorerUrl}
         onOpenSeed={() => setPage('seed')}
-        onOpenRetry={() => setPage('retry')}
+        onOpenRetry={openRetryPage}
         onOpenResolve={() => setPage('resolve')}
         onRuntimeCase={() => openRuntimeCase(MAIN_RUNTIME_CASE)}
       />}
@@ -263,12 +274,12 @@ function App() {
       >
         <CaseLoader caseId={caseId} setCaseId={(value) => { setCaseId(value); if (value !== caseData?.case_id) { setCaseData(null); setAttemptData(null); setScanPhase('idle'); setScanBaseline([]); setScanCandidate([]); setScanResult(null); } }} busy={busy} onLoad={() => { setScanPhase('idle'); setScanResult(null); void inspect(caseId, '', true); }}/>
         <Field label="Reworded request" hint="Stored for audit only. This text does not enter the semantic gate."><textarea disabled={retryFormLocked} value={requestText} onChange={e=>setRequestText(e.target.value)}/></Field>
-        <Field label="Full candidate evidence" hint={retryReady ? "Current baseline is prefilled. Append only genuinely new evidence; do not remove baseline items." : "Load a rejected case to prefill its complete baseline evidence."}><textarea className="tall" disabled={retryFormLocked} value={retryEvidence} onChange={e=>setRetryEvidence(e.target.value)}/></Field>
+        <Field label={retryClosed ? "Final baseline evidence" : "Full candidate evidence"} hint={retryClosed ? "Final accepted baseline loaded from finalized contract state." : retryReady ? "Current baseline is prefilled. Append only genuinely new evidence; do not remove baseline items." : "Load a rejected case to prefill its complete baseline evidence."}><textarea className="tall" disabled={retryFormLocked} value={loadedCaseMatches && retryFormLocked ? caseData?.baseline_evidence.join('\n') || '' : retryEvidence} onChange={e=>setRetryEvidence(e.target.value)}/></Field>
         <SemanticBoundaryScan
           phase={scanPhase}
           requestText={requestText}
           baseline={scanBaseline.length ? scanBaseline : (loadedCaseMatches ? caseData?.baseline_evidence || [] : [])}
-          candidate={scanCandidate.length ? scanCandidate : retryEvidence.split('\n').map((x) => x.trim()).filter(Boolean)}
+          candidate={scanCandidate.length ? scanCandidate : (loadedCaseMatches && retryFormLocked ? caseData?.baseline_evidence || [] : retryEvidence.split('\n').map((x) => x.trim()).filter(Boolean))}
           result={scanResult}
           caseStatus={retryStatus}
           onInspect={() => setPage('inspect')}
