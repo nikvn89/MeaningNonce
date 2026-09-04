@@ -1,6 +1,6 @@
 {
   "project": "MeaningNonce",
-  "build": "submission-final-semantic-boundary-scan-terminal-ux",
+  "build": "submission-final-semantic-boundary-scan-terminal-baseline-sync",
   "network": "GenLayer StudioNet",
   "live_dapp": "https://meaning-nonce.vercel.app",
   "contract_address": "0x1A81177f32d22185F421F0019714DCB6e3124263",
@@ -8,9 +8,9 @@
   "production_contract_sha256": "d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f",
   "runtime_status": "CORE_RUNTIME_PASS",
   "main_case_final_status": "CLOSED_ACCEPTED",
-  "frontend_status": "LIVE_VERCEL_SEMANTIC_BOUNDARY_SCAN_VISUAL_PASS; FINAL_TERMINAL_RETRY_UX_SOURCE_PATCH_READY_FOR_REDEPLOY",
+  "frontend_status": "LIVE_VERCEL_SEMANTIC_BOUNDARY_SCAN_VISUAL_PASS; FINAL_TERMINAL_BASELINE_SYNC_SOURCE_PATCH_READY_FOR_REDEPLOY",
   "brand_status": "LOGO_AND_BRAND_ASSETS_INCLUDED",
-  "signature_interaction": "Semantic Boundary Scan reveals verdict only after finalized attempt read-back; loaded baselines are prefilled and terminal/pending cases lock retry controls",
+  "signature_interaction": "Semantic Boundary Scan reveals verdict only after finalized attempt read-back; loaded cases hydrate the retry workspace from finalized baseline evidence, and terminal/pending cases lock retry controls",
   "local_executed_gates": {
     "python_compile": "PASS",
     "ast_static_gate": "PASS",
@@ -27,7 +27,8 @@
     "authority_role_guard_shortcut": "PASS",
     "mobile_responsive": "PASS user-confirmed",
     "semantic_boundary_scan": "PASS from user-supplied production screenshot",
-    "terminal_retry_ux_patch": "PASS source/syntax gate; live Vercel redeploy smoke pending"
+    "terminal_retry_ux_patch": "PASS from user-supplied production screenshot",
+    "terminal_baseline_sync_patch": "PASS source/syntax gate; live Vercel redeploy smoke pending"
   },
   "not_claimed_pass_in_packaging_environment": [
     "genvm-lint exact-source",
@@ -69,7 +70,7 @@
     "scripts/fence_probe.py": "35456b8aee85876e5b10d30778d70e4e5646820e72903da025988b3185167614",
     "scripts/mutation_matrix.py": "ef075f724f19eb0bc08d78d039b8c80e691c43ae6f3ca704f22f778ec2cea688",
     "scripts/test_contract_logic.py": "671fdaaa59a027f429e8f9630c64072011e45d626332a2584b57e3975d6f3bd9",
-    "src/App.tsx": "f3eb1333f85e8bc8bc901446fa6b58a4f362f8bfb3df9b88c4c2f86c1954b010",
+    "src/App.tsx": "89de85bd610a710377bd339d070868e06592c93397c5d2d2e6aba495c654f270",
     "src/config.ts": "6c08a465a7708f630691a2c9a80974096d99d226fa11e60c2724dc947c6174f9",
     "src/genlayer.ts": "0ac0bb91f2c1bb9f46fbb61e9348409310c047dded4487255b5a90e783e9db1c",
     "src/main.tsx": "5222f4e4eb930b55f72a5b0d6771a58c9e82e8adba571bb5712bcc5a7e697054",
