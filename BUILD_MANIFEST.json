@@ -1,6 +1,6 @@
 {
   "project": "MeaningNonce",
-  "build": "submission-final-semantic-boundary-scan",
+  "build": "submission-final-semantic-boundary-scan-terminal-ux",
   "network": "GenLayer StudioNet",
   "live_dapp": "https://meaning-nonce.vercel.app",
   "contract_address": "0x1A81177f32d22185F421F0019714DCB6e3124263",
@@ -8,9 +8,9 @@
   "production_contract_sha256": "d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f",
   "runtime_status": "CORE_RUNTIME_PASS",
   "main_case_final_status": "CLOSED_ACCEPTED",
-  "frontend_status": "LIVE_VERCEL_BASE_UI_VISUAL_PASS; FINAL_SEMANTIC_BOUNDARY_SCAN_SOURCE_PATCH_READY_FOR_REDEPLOY",
+  "frontend_status": "LIVE_VERCEL_SEMANTIC_BOUNDARY_SCAN_VISUAL_PASS; FINAL_TERMINAL_RETRY_UX_SOURCE_PATCH_READY_FOR_REDEPLOY",
   "brand_status": "LOGO_AND_BRAND_ASSETS_INCLUDED",
-  "signature_interaction": "Semantic Boundary Scan reveals verdict only after finalized attempt read-back",
+  "signature_interaction": "Semantic Boundary Scan reveals verdict only after finalized attempt read-back; loaded baselines are prefilled and terminal/pending cases lock retry controls",
   "local_executed_gates": {
     "python_compile": "PASS",
     "ast_static_gate": "PASS",
@@ -25,7 +25,9 @@
     "desktop_navigation": "PASS from user-supplied production screenshots",
     "main_runtime_case_shortcut": "PASS",
     "authority_role_guard_shortcut": "PASS",
-    "mobile_responsive": "PASS user-confirmed"
+    "mobile_responsive": "PASS user-confirmed",
+    "semantic_boundary_scan": "PASS from user-supplied production screenshot",
+    "terminal_retry_ux_patch": "PASS source/syntax gate; live Vercel redeploy smoke pending"
   },
   "not_claimed_pass_in_packaging_environment": [
     "genvm-lint exact-source",
@@ -67,11 +69,11 @@
     "scripts/fence_probe.py": "35456b8aee85876e5b10d30778d70e4e5646820e72903da025988b3185167614",
     "scripts/mutation_matrix.py": "ef075f724f19eb0bc08d78d039b8c80e691c43ae6f3ca704f22f778ec2cea688",
     "scripts/test_contract_logic.py": "671fdaaa59a027f429e8f9630c64072011e45d626332a2584b57e3975d6f3bd9",
-    "src/App.tsx": "5ac948c67c3616f627908d84cf3353c9aa28f9e4ec6b1fb0330bcaa0d95357f1",
+    "src/App.tsx": "f3eb1333f85e8bc8bc901446fa6b58a4f362f8bfb3df9b88c4c2f86c1954b010",
     "src/config.ts": "6c08a465a7708f630691a2c9a80974096d99d226fa11e60c2724dc947c6174f9",
     "src/genlayer.ts": "0ac0bb91f2c1bb9f46fbb61e9348409310c047dded4487255b5a90e783e9db1c",
     "src/main.tsx": "5222f4e4eb930b55f72a5b0d6771a58c9e82e8adba571bb5712bcc5a7e697054",
-    "src/styles.css": "fdd0ad427894efdb3800a51a10ab6e7d311a79fd22218636a0e5d0538ec3ca7c",
+    "src/styles.css": "e074f1830c4774481548e75f14a289de9af7b11b74eeee28639e471fbb58cfc2",
     "src/types.ts": "baf7e1793bdfaa04684162e0901f9a25f65571bb53985a117e998ade49770e6d",
     "src/vite-env.d.ts": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
     "tests/direct/test_claude_adversarial.py": "4c74c9e39fab3a355de8e6a4d2df6d62deebfa93bae5b3b5135422d734213917",
