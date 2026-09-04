@@ -9,6 +9,7 @@ const MAIN_RUNTIME_CASE = 'fcbab56d34ba7520125cc205bf4b1ab392d20d5ac7b0827b32d7b
 const ROLE_GUARD_CASE = '6f1bc3dcd447849d1aeed5ce9021c6df989792bbf3d6ac9955f38c028023595f';
 
 type Page = 'overview' | 'seed' | 'retry' | 'resolve' | 'inspect' | 'evidence';
+type ScanPhase = 'idle' | 'scanning' | 'finalized';
 
 function App() {
   const [contractAddress, setContractAddress] = useState(DEFAULT_CONTRACT_ADDRESS);
@@ -34,6 +35,10 @@ function App() {
   const [freshEvidence, setFreshEvidence] = useState('Original evidence item A\nOriginal evidence item B\nNew evidence item C');
   const [declineNote, setDeclineNote] = useState('The reopened evidence does not justify adopting a new upstream baseline.');
   const [attemptId, setAttemptId] = useState('');
+  const [scanPhase, setScanPhase] = useState<ScanPhase>('idle');
+  const [scanBaseline, setScanBaseline] = useState<string[]>([]);
+  const [scanCandidate, setScanCandidate] = useState<string[]>([]);
+  const [scanResult, setScanResult] = useState<AttemptRecord | null>(null);
 
   const validAddress = useMemo(() => /^0x[a-fA-F0-9]{40}$/.test(contractAddress), [contractAddress]);
   const isAuthority = !!account && !!caseData?.authority && account.toLowerCase() === caseData.authority.toLowerCase();
@@ -89,6 +94,11 @@ function App() {
       if (!caseId) throw new Error('Enter a case ID first.');
       const before = await readJson<CaseRecord>(contractAddress as `0x${string}`, 'get_case', [caseId]);
       if (!before) throw new Error('Case not found in finalized state.');
+      const candidate = retryEvidence.split('\n').map((x) => x.trim()).filter(Boolean);
+      setScanBaseline(before.baseline_evidence);
+      setScanCandidate(candidate);
+      setScanResult(null);
+      setScanPhase('scanning');
       const previousAttempt = before.latest_attempt_id || '';
       const previousCount = before.attempt_count;
       await withWrite('submit_retry', [caseId, requestText, linesToJson(retryEvidence)]);
@@ -100,9 +110,16 @@ function App() {
       if (!a || a.requester.toLowerCase() !== account.toLowerCase()) {
         throw new Error('Latest on-chain attempt is not bound to the connected requester.');
       }
-      setCaseData(c); setAttemptId(c.latest_attempt_id); setAttemptData(a); setPage('inspect');
+      setCaseData(c); setAttemptId(c.latest_attempt_id); setAttemptData(a);
+      setScanBaseline(c.baseline_evidence);
+      setScanCandidate(a.candidate_evidence);
+      setScanResult(a);
+      setScanPhase('finalized');
       setNotice(`Retry verified on-chain: ${a.outcome}; model_called=${String(a.model_called)}.`);
-    } catch (e:any) { setNotice(e?.message || String(e)); }
+    } catch (e:any) {
+      setScanPhase('idle'); setScanResult(null);
+      setNotice(e?.message || String(e));
+    }
   }
 
   async function resolve() {
@@ -192,7 +209,7 @@ function App() {
       <NavButton active={page==='retry'} icon="➤" label="Submit Retry" onClick={() => setPage('retry')} />
       <NavButton active={page==='resolve'} icon="◇" label="Resolve" onClick={() => setPage('resolve')} />
       <NavButton active={page==='inspect'} icon="⌕" label="Inspect Cases" onClick={() => setPage('inspect')} />
-      <NavButton active={page==='evidence'} icon="</>" label="Runtime Evidence" onClick={() => setPage('evidence')} />
+      <NavButton active={page==='evidence'} icon="</>" label="Runtime Proof" onClick={() => setPage('evidence')} />
       <div className="sidebarSpacer" />
       <div className="helpCard">
         <b>Need help?</b>
@@ -230,9 +247,17 @@ function App() {
         subtitle="Use the full candidate evidence set. Rewording alone never creates a fresh semantic adjudication."
         aside={<SideState caseData={caseData} attemptData={attemptData} account={account} />}
       >
-        <CaseLoader caseId={caseId} setCaseId={setCaseId} busy={busy} onLoad={() => inspect(caseId, '')}/>
+        <CaseLoader caseId={caseId} setCaseId={setCaseId} busy={busy} onLoad={() => { setScanPhase('idle'); setScanResult(null); void inspect(caseId, ''); }}/>
         <Field label="Reworded request" hint="Stored for audit only. This text does not enter the semantic gate."><textarea value={requestText} onChange={e=>setRequestText(e.target.value)}/></Field>
         <Field label="Full candidate evidence" hint="Include the complete baseline plus any genuinely new evidence. One item per line."><textarea className="tall" value={retryEvidence} onChange={e=>setRetryEvidence(e.target.value)}/></Field>
+        <SemanticBoundaryScan
+          phase={scanPhase}
+          requestText={requestText}
+          baseline={scanBaseline.length ? scanBaseline : (caseData?.baseline_evidence || [])}
+          candidate={scanCandidate.length ? scanCandidate : retryEvidence.split('\n').map((x) => x.trim()).filter(Boolean)}
+          result={scanResult}
+          onInspect={() => setPage('inspect')}
+        />
         <div className="buttonRow">
           <button className="primaryButton" disabled={busy || !account || !caseId || isAuthority} onClick={retry}>Run MeaningNonce gate</button>
           <button className="secondaryButton" disabled={busy || !caseId || !isAuthority || caseData?.status !== 'LOCKED_REJECTED' || (caseData?.model_calls_this_epoch ?? 0) < 3 || (caseData?.budget_grants_this_epoch ?? 0) >= 5} onClick={grantBudget}>Authority · grant retry budget</button>
@@ -369,11 +394,45 @@ function RuntimeEvidence({onRuntimeCase,onRoleCase}:{onRuntimeCase:()=>void;onRo
     <div className="evidenceGrid">
       <section className="card evidenceList">{gates.map(([title,body])=><div className="evidenceRow" key={title}><span className="checkIcon">✓</span><div><b>{title}</b><p>{body}</p></div></div>)}</section>
       <aside className="sideColumn">
-        <div className="card sideCard"><span className="sectionEyebrow">Deployment</span><h3>0x1A811…4263</h3><p className="sideNote">MeaningNonce production candidate on GenLayer StudioNet.</p><a className="secondaryButton blockButton" href={`https://explorer-studio.genlayer.com/address/${DEFAULT_CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer">Open Explorer ↗</a></div>
+        <div className="card sideCard"><span className="sectionEyebrow">Deployment</span><h3>0x1A811…4263</h3><p className="sideNote">MeaningNonce final StudioNet deployment.</p><a className="secondaryButton blockButton" href={`https://explorer-studio.genlayer.com/address/${DEFAULT_CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer">Open Explorer ↗</a></div>
         <div className="card sideCard"><span className="sectionEyebrow">Cases</span><button className="exampleLink" onClick={onRuntimeCase}>Main runtime case <span>→</span></button><button className="exampleLink" onClick={onRoleCase}>Role-guard case <span>→</span></button></div>
       </aside>
     </div>
   </>
+}
+
+function SemanticBoundaryScan({phase,requestText,baseline,candidate,result,onInspect}:{phase:ScanPhase;requestText:string;baseline:string[];candidate:string[];result:AttemptRecord|null;onInspect:()=>void}) {
+  const finalized = phase === 'finalized' && !!result;
+  const material = finalized && result.outcome === 'MATERIAL_DELTA';
+  const blocked = finalized && !material;
+  const delta = finalized ? result.additions : [];
+  const resultText = !finalized ? 'Awaiting finalized contract result' : material ? 'Boundary opened · fresh decision required' : 'Boundary closed · retry does not buy a fresh verdict';
+  return <section className={`semanticScan ${phase} ${material?'material':''} ${blocked?'blocked':''}`} aria-live="polite">
+    <div className="scanTopline"><div><span className="sectionEyebrow">Signature effect</span><b>Semantic Boundary Scan</b></div><span className="scanTruth">Verdict appears only after finalized state verification</span></div>
+    {phase === 'scanning' && <span className="scanBeam" aria-hidden="true"/>}
+    <div className="scanStages">
+      <div className={`scanStage wording ${phase!=='idle'?'excluded':''}`}>
+        <div className="scanStageHead"><span>01</span><b>Request wording</b><em>AUDIT ONLY</em></div>
+        <p>{requestText || 'No request wording entered.'}</p>
+        <small>{phase==='idle' ? 'Stored for audit; excluded from the semantic gate.' : 'Excluded from the semantic decision boundary.'}</small>
+      </div>
+      <div className={`scanStage baseline ${phase!=='idle'?'locked':''}`}>
+        <div className="scanStageHead"><span>02</span><b>Baseline</b><em>LOCKED</em></div>
+        <div className="scanEvidenceItems">{baseline.length ? baseline.map((x,i)=><span key={`${x}-${i}`}>{x}</span>) : <i>Load a case to lock the recorded baseline.</i>}</div>
+        <small>The contract will not let a retry silently shrink this baseline.</small>
+      </div>
+      <div className={`scanStage candidate ${phase==='scanning'?'active':''}`}>
+        <div className="scanStageHead"><span>03</span><b>Candidate evidence</b><em>{finalized ? `${delta.length} NEW` : 'SCAN'}</em></div>
+        <div className="scanEvidenceItems">{candidate.length ? candidate.map((x,i)=><span className={finalized && delta.includes(x)?'newDelta':''} key={`${x}-${i}`}>{x}</span>) : <i>Add the full candidate evidence set.</i>}</div>
+        <small>{finalized ? (delta.length ? 'Finalized additions are highlighted.' : 'No finalized new-evidence delta.') : 'Candidate evidence is staged; no semantic verdict is inferred in the UI.'}</small>
+      </div>
+    </div>
+    <div className={`scanVerdict ${finalized?'revealed':''}`}>
+      <div className="scanVerdictIcon">{phase==='scanning'?'⌁':material?'↗':finalized?'⊘':'◇'}</div>
+      <div><span>{phase==='scanning'?'CONSENSUS IN PROGRESS':finalized?result.outcome:'READY'}</span><b>{phase==='idle'?'Run the gate to visualize the real contract path.':resultText}</b>{finalized && <small>model_called={String(result.model_called)} · epoch={result.epoch} · additions={result.additions.length}</small>}</div>
+      {finalized && <button className="secondaryButton compact" onClick={onInspect}>Inspect finalized attempt</button>}
+    </div>
+  </section>
 }
 
 function CaseDetail({caseData,onCopy}:{caseData:CaseRecord|null;onCopy:(v:string)=>void}) {
