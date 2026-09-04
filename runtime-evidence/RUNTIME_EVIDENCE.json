@@ -1,0 +1,88 @@
+{
+  "deployment": {
+    "network": "GenLayer StudioNet",
+    "contract_address": "0x1A81177f32d22185F421F0019714DCB6e3124263",
+    "repo_contract_sha256": "d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f",
+    "deployment_ui_observed": "Accepted / FINALIZED",
+    "note": "Explorer could not be fetched from the build environment; address and runtime state were verified through GenLayer Studio screenshots/read methods."
+  },
+  "main_case": {
+    "case_id": "fcbab56d34ba7520125cc205bf4b1ab392d20d5ac7b0827b32d7b63df5e6bc95",
+    "authority": "0x6276095FAEA15108740445ff277fdA8c304657F4",
+    "requester": "0xAD05365aFe0C2450d4FFBcdbE555b6E5fB7Dfa35",
+    "final_state": {
+      "decision": "ACCEPTED",
+      "status": "CLOSED_ACCEPTED",
+      "epoch": 2,
+      "attempt_count": 8,
+      "blocked_count": 5,
+      "model_calls_this_epoch": 1,
+      "budget_grants_this_epoch": 0,
+      "pending_attempt_id": "",
+      "baseline_evidence": [
+        "Signed policy snapshot v1",
+        "Superseding authorization C-301 expressly grants the exact authority scope previously found missing.",
+        "New signed authorization B-201 explicitly grants this requester permission for the previously rejected action.",
+        "Authorization record A-104"
+      ]
+    }
+  },
+  "attempt_snapshots": {
+    "epoch1_exact_replay": {
+      "attempt_id": "f87e11b86185309ae30bf63f36ce134cdafb7a4c7186551ab3acd56839e481ac",
+      "epoch": 1,
+      "outcome": "EXACT_REPLAY",
+      "model_called": false,
+      "additions": []
+    },
+    "epoch1_baseline_removal": {
+      "attempt_id": "af73042ab500026d2c9018b6fd3cdde70e98ec3496bfd5ddea56a46083ef9bbc",
+      "epoch": 1,
+      "outcome": "BASELINE_REMOVAL_BLOCKED",
+      "model_called": false,
+      "additions": []
+    },
+    "epoch1_already_adjudicated": {
+      "attempt_id": "97aa0530994aa8b93ff90a83005676c390ed253c61cffaf60ca0cf736f229819",
+      "epoch": 1,
+      "outcome": "ALREADY_ADJUDICATED",
+      "model_called": false,
+      "prior_semantic_outcome": "IMMATERIAL_DELTA",
+      "candidate_key": "e89480cc901cf4d3ff88dd602443079ad16e01a629369fb57674600fae18ba1c"
+    },
+    "epoch1_material_reopen": {
+      "attempt_id": "563800e1efe25cf99bc55e433c8d3ae0833102672fc365b51f91bba73cb94ae4",
+      "epoch": 1,
+      "outcome": "MATERIAL_DELTA",
+      "model_called": true,
+      "candidate_key": "9e2727a5f7995b00448516835efba883f020cdb921b7008a874c516c5bff3b72"
+    },
+    "epoch2_exact_replay": {
+      "attempt_id": "5a65947dd7a58c2dc4e4add59fa76d3385d61537a2f274d60c03bb28de92208e",
+      "epoch": 2,
+      "outcome": "EXACT_REPLAY",
+      "model_called": false,
+      "additions": []
+    },
+    "epoch2_material_reopen": {
+      "attempt_id": "14cbf951fb1937e5733d3057cdc7df19eba9e90eee572f174d591147f7275da4",
+      "epoch": 2,
+      "outcome": "MATERIAL_DELTA",
+      "model_called": true,
+      "candidate_key": "236aaeac0b0d43c5527e12c462da312ad70c280d10e44bc3d9216910e468c8f8"
+    }
+  },
+  "role_guard_case": {
+    "case_id": "6f1bc3dcd447849d1aeed5ce9021c6df989792bbf3d6ac9955f38c028023595f",
+    "authority": "0x6276095FAEA15108740445ff277fdA8c304657F4",
+    "status_after_failed_self_retry": "LOCKED_REJECTED",
+    "attempt_count": 0,
+    "model_calls_this_epoch": 0,
+    "observed_error": "AUTHORITY_CANNOT_SUBMIT_RETRY"
+  },
+  "observed_failure_gates": [
+    "DECISION_EVIDENCE_MUST_MATCH_REOPENED_ATTEMPT",
+    "CASE_NOT_RETRYABLE",
+    "AUTHORITY_CANNOT_SUBMIT_RETRY"
+  ]
+}

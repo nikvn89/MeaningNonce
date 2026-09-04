@@ -1,0 +1,31 @@
+{
+  "name": "meaningnonce",
+  "version": "1.4.0-runtime",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "check:contract": "python scripts/check_contract_ast.py",
+    "check": "npm run check:contract && npm run test:logic && npm run test:adversarial && npm run test:fence && npm run test:mutations && npm run build",
+    "deploy:studionet": "genlayer deploy --contract contracts/MeaningNonce.py --rpc https://studio.genlayer.com/api",
+    "test:logic": "python scripts/test_contract_logic.py",
+    "test:mutations": "python scripts/mutation_matrix.py",
+    "test:adversarial": "python scripts/test_contract_logic.py --suite adversarial",
+    "test:direct": "pytest tests/direct/ -v",
+    "lint:genvm": "genvm-lint check contracts/MeaningNonce.py && genvm-lint schema contracts/MeaningNonce.py && genvm-lint typecheck contracts/MeaningNonce.py",
+    "test:fence": "python scripts/fence_probe.py contracts/MeaningNonce.py"
+  },
+  "dependencies": {
+    "genlayer-js": "1.1.8",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.5",
+    "@types/react-dom": "18.3.0",
+    "@vitejs/plugin-react": "4.3.1",
+    "typescript": "5.5.4",
+    "vite": "5.4.2"
+  }
+}
