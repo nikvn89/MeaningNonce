@@ -41,7 +41,13 @@ function App() {
   const [scanResult, setScanResult] = useState<AttemptRecord | null>(null);
 
   const validAddress = useMemo(() => /^0x[a-fA-F0-9]{40}$/.test(contractAddress), [contractAddress]);
-  const isAuthority = !!account && !!caseData?.authority && account.toLowerCase() === caseData.authority.toLowerCase();
+  const loadedCaseMatches = !!caseData && !!caseId && caseData.case_id === caseId;
+  const isAuthority = loadedCaseMatches && !!account && !!caseData?.authority && account.toLowerCase() === caseData.authority.toLowerCase();
+  const retryStatus = loadedCaseMatches ? caseData.status : null;
+  const retryReady = retryStatus === 'LOCKED_REJECTED';
+  const retryClosed = retryStatus === 'CLOSED_ACCEPTED';
+  const retryAwaiting = retryStatus === 'AWAITING_FRESH_DECISION';
+  const retryFormLocked = retryClosed || retryAwaiting;
   const explorerUrl = `https://explorer-studio.genlayer.com/address/${contractAddress}`;
 
   async function copy(value: string) {
@@ -160,13 +166,21 @@ function App() {
     } catch (e:any) { setNotice(e?.message || String(e)); }
   }
 
-  async function inspect(targetCaseId = caseId, targetAttemptId = attemptId) {
+  async function inspect(targetCaseId = caseId, targetAttemptId = attemptId, hydrateRetry = false) {
     if (!validAddress || !targetCaseId) { setNotice('Enter a case ID to inspect.'); return; }
     setBusy(true);
     try {
       const c = await readJson<CaseRecord>(contractAddress as `0x${string}`, 'get_case', [targetCaseId]);
       if (!c) throw new Error('Case not found in finalized state.');
       setCaseId(targetCaseId); setCaseData(c);
+      if (hydrateRetry) {
+        const baselineText = c.baseline_evidence.join('\n');
+        setRetryEvidence(baselineText);
+        setScanBaseline(c.baseline_evidence);
+        setScanCandidate([]);
+        setScanResult(null);
+        setScanPhase('idle');
+      }
       const inspectAttemptId = targetAttemptId || c.latest_attempt_id || '';
       if (inspectAttemptId) {
         const a = await readJson<AttemptRecord>(contractAddress as `0x${string}`, 'get_attempt', [inspectAttemptId]);
@@ -247,22 +261,23 @@ function App() {
         subtitle="Use the full candidate evidence set. Rewording alone never creates a fresh semantic adjudication."
         aside={<SideState caseData={caseData} attemptData={attemptData} account={account} />}
       >
-        <CaseLoader caseId={caseId} setCaseId={setCaseId} busy={busy} onLoad={() => { setScanPhase('idle'); setScanResult(null); void inspect(caseId, ''); }}/>
-        <Field label="Reworded request" hint="Stored for audit only. This text does not enter the semantic gate."><textarea value={requestText} onChange={e=>setRequestText(e.target.value)}/></Field>
-        <Field label="Full candidate evidence" hint="Include the complete baseline plus any genuinely new evidence. One item per line."><textarea className="tall" value={retryEvidence} onChange={e=>setRetryEvidence(e.target.value)}/></Field>
+        <CaseLoader caseId={caseId} setCaseId={(value) => { setCaseId(value); if (value !== caseData?.case_id) { setCaseData(null); setAttemptData(null); setScanPhase('idle'); setScanBaseline([]); setScanCandidate([]); setScanResult(null); } }} busy={busy} onLoad={() => { setScanPhase('idle'); setScanResult(null); void inspect(caseId, '', true); }}/>
+        <Field label="Reworded request" hint="Stored for audit only. This text does not enter the semantic gate."><textarea disabled={retryFormLocked} value={requestText} onChange={e=>setRequestText(e.target.value)}/></Field>
+        <Field label="Full candidate evidence" hint={retryReady ? "Current baseline is prefilled. Append only genuinely new evidence; do not remove baseline items." : "Load a rejected case to prefill its complete baseline evidence."}><textarea className="tall" disabled={retryFormLocked} value={retryEvidence} onChange={e=>setRetryEvidence(e.target.value)}/></Field>
         <SemanticBoundaryScan
           phase={scanPhase}
           requestText={requestText}
-          baseline={scanBaseline.length ? scanBaseline : (caseData?.baseline_evidence || [])}
+          baseline={scanBaseline.length ? scanBaseline : (loadedCaseMatches ? caseData?.baseline_evidence || [] : [])}
           candidate={scanCandidate.length ? scanCandidate : retryEvidence.split('\n').map((x) => x.trim()).filter(Boolean)}
           result={scanResult}
+          caseStatus={retryStatus}
           onInspect={() => setPage('inspect')}
         />
         <div className="buttonRow">
-          <button className="primaryButton" disabled={busy || !account || !caseId || isAuthority} onClick={retry}>Run MeaningNonce gate</button>
-          <button className="secondaryButton" disabled={busy || !caseId || !isAuthority || caseData?.status !== 'LOCKED_REJECTED' || (caseData?.model_calls_this_epoch ?? 0) < 3 || (caseData?.budget_grants_this_epoch ?? 0) >= 5} onClick={grantBudget}>Authority · grant retry budget</button>
+          <button className="primaryButton" disabled={busy || !account || !caseId || !retryReady || isAuthority} onClick={retry}>{retryClosed ? 'Case closed' : retryAwaiting ? 'Awaiting fresh decision' : 'Run MeaningNonce gate'}</button>
+          <button className="secondaryButton" disabled={busy || !caseId || !isAuthority || !retryReady || (caseData?.model_calls_this_epoch ?? 0) < 3 || (caseData?.budget_grants_this_epoch ?? 0) >= 5} onClick={grantBudget}>Authority · grant retry budget</button>
         </div>
-        {isAuthority && <div className="warningBox">The connected wallet is this case's authority. Authorities cannot submit retries against their own rejected case.</div>}
+        {retryClosed ? <div className="terminalBox"><b>This case is CLOSED_ACCEPTED.</b><span>No further retries are allowed.</span></div> : retryAwaiting ? <div className="pendingBox"><b>This case is AWAITING_FRESH_DECISION.</b><span>The retry gate is paused until the authority records or declines the fresh decision.</span></div> : isAuthority ? <div className="warningBox">The connected wallet is this case's authority. Authorities cannot submit retries against their own rejected case.</div> : null}
       </PageLayout>}
 
       {page === 'resolve' && <PageLayout
@@ -401,11 +416,15 @@ function RuntimeEvidence({onRuntimeCase,onRoleCase}:{onRuntimeCase:()=>void;onRo
   </>
 }
 
-function SemanticBoundaryScan({phase,requestText,baseline,candidate,result,onInspect}:{phase:ScanPhase;requestText:string;baseline:string[];candidate:string[];result:AttemptRecord|null;onInspect:()=>void}) {
+function SemanticBoundaryScan({phase,requestText,baseline,candidate,result,caseStatus,onInspect}:{phase:ScanPhase;requestText:string;baseline:string[];candidate:string[];result:AttemptRecord|null;caseStatus:CaseRecord['status']|null;onInspect:()=>void}) {
   const finalized = phase === 'finalized' && !!result;
   const material = finalized && result.outcome === 'MATERIAL_DELTA';
   const blocked = finalized && !material;
   const delta = finalized ? result.additions : [];
+  const terminalIdle = phase === 'idle' && caseStatus === 'CLOSED_ACCEPTED';
+  const pendingIdle = phase === 'idle' && caseStatus === 'AWAITING_FRESH_DECISION';
+  const idleLabel = terminalIdle ? 'TERMINAL' : pendingIdle ? 'PENDING' : 'READY';
+  const idleText = terminalIdle ? 'Case closed · no further retry can enter the gate.' : pendingIdle ? 'Case awaiting fresh decision · retry gate is paused.' : 'Run the gate to visualize the real contract path.';
   const resultText = !finalized ? 'Awaiting finalized contract result' : material ? 'Boundary opened · fresh decision required' : 'Boundary closed · retry does not buy a fresh verdict';
   return <section className={`semanticScan ${phase} ${material?'material':''} ${blocked?'blocked':''}`} aria-live="polite">
     <div className="scanTopline"><div><span className="sectionEyebrow">Signature effect</span><b>Semantic Boundary Scan</b></div><span className="scanTruth">Verdict appears only after finalized state verification</span></div>
@@ -429,7 +448,7 @@ function SemanticBoundaryScan({phase,requestText,baseline,candidate,result,onIns
     </div>
     <div className={`scanVerdict ${finalized?'revealed':''}`}>
       <div className="scanVerdictIcon">{phase==='scanning'?'⌁':material?'↗':finalized?'⊘':'◇'}</div>
-      <div><span>{phase==='scanning'?'CONSENSUS IN PROGRESS':finalized?result.outcome:'READY'}</span><b>{phase==='idle'?'Run the gate to visualize the real contract path.':resultText}</b>{finalized && <small>model_called={String(result.model_called)} · epoch={result.epoch} · additions={result.additions.length}</small>}</div>
+      <div><span>{phase==='scanning'?'CONSENSUS IN PROGRESS':finalized?result.outcome:idleLabel}</span><b>{phase==='idle'?idleText:resultText}</b>{finalized && <small>model_called={String(result.model_called)} · epoch={result.epoch} · additions={result.additions.length}</small>}</div>
       {finalized && <button className="secondaryButton compact" onClick={onInspect}>Inspect finalized attempt</button>}
     </div>
   </section>
