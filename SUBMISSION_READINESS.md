@@ -8,6 +8,9 @@
 - Runtime rollback gates observed for evidence mismatch, post-close retry, and authority self-retry.
 - Local actual-source AST/behavior/adversarial/fence/mutation gates re-executed and PASS.
 - Frontend config stamped to the deployed contract.
+- Final usability redesign completed: persistent navigation, guided 3-step workflow, clearer role/status context, runtime evidence page, verified-case shortcuts.
+- MeaningNonce project logo and brand assets added under `public/`; brand spec recorded in `BRAND_ASSETS.md`.
+- TypeScript/TSX source syntax transpile check completed for the redesigned frontend.
 - Stale pre-deploy review request/self-check files removed from the clean package.
 - `__pycache__`, `.pyc`, `node_modules`, `dist`, and other build caches excluded.
 
@@ -20,4 +23,4 @@
 - Explorer-side source-hash comparison (Explorer fetch unavailable here);
 - an exact-v4 independent Claude `SAFE TO DEPLOY AS-IS — YES` artifact is not present in this workspace.
 
-Do not relabel any of those items as PASS without executing/collecting them. The clean package is **runtime-updated and Vercel-ready**, not a fabricated all-gates-pass bundle.
+Do not relabel any of those items as PASS without executing/collecting them. The clean package is **runtime-updated, logo-complete, usability-redesigned, and Vercel-ready**, not a fabricated all-gates-pass bundle.

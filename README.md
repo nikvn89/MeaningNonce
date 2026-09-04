@@ -1,5 +1,7 @@
 # MeaningNonce
 
+<img src="public/logo.png" alt="MeaningNonce logo" width="112" />
+
 **Semantic anti-verdict-shopping for AI-agent retries on GenLayer.**
 
 > Traditional nonces stop exact transaction replay. MeaningNonce stops a rejected request from buying another semantic roll merely by changing its wording when the evidence is unchanged or the same evidence set has already been adjudicated.
@@ -85,9 +87,13 @@ The current environment does not have `genvm-linter` / `genlayer-test` installed
 
 ## Frontend
 
-The dApp is now stamped to the runtime-tested StudioNet deployment by default. `VITE_CONTRACT_ADDRESS` remains an optional override.
+The dApp is stamped to the runtime-tested StudioNet deployment by default. `VITE_CONTRACT_ADDRESS` remains an optional override.
+
+The final UI was redesigned for reviewer usability rather than visual novelty: persistent left navigation, a three-step overview, dedicated Seed / Retry / Resolve / Inspect pages, explicit role/status cards, one-click loading of verified runtime cases, and a separate Runtime Evidence page. The project mark is included at `public/logo.png`; the wider brand lockup and UI reference are stored under `public/`.
 
 The client does not treat `FINALIZED` alone as successful execution. Where an execution enum is exposed it requires `FINISHED_WITH_RETURN`; otherwise each write verifies a method-specific finalized on-chain state postcondition before presenting success.
+
+Brand rationale and the reusable image-generation prompt/spec are documented in [`BRAND_ASSETS.md`](./BRAND_ASSETS.md).
 
 ## Reviewer entry points
 
