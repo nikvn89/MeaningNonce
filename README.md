@@ -11,6 +11,7 @@
 - Contract: `0x1A81177f32d22185F421F0019714DCB6e3124263`
 - Explorer: `https://explorer-studio.genlayer.com/address/0x1A81177f32d22185F421F0019714DCB6e3124263`
 - Frozen repository contract SHA-256: `d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f`
+- Live dApp: `https://meaning-nonce.vercel.app`
 - Runtime verification: [`runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md`](./runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md)
 
 ## Core behavior
@@ -83,13 +84,13 @@ caught mutations: 15/15
 PASS Python compile
 ```
 
-The current environment does not have `genvm-linter` / `genlayer-test` installed and its package fetch timed out during `npm install`; therefore this package does **not** falsely relabel those exact-source gates as PASS. Run them in the pinned reviewer environment before submission if the steward requires repository-executable GenVM/Direct Mode/frontend-build proof.
+The current packaging environment does not have `genvm-linter` / `genlayer-test` installed and its package fetch timed out during `npm install`; therefore this package does **not** falsely relabel those exact-source gates as PASS. The production frontend is live on Vercel and was visually checked from production screenshots across the main navigation and verified-case views; the user also confirmed the responsive mobile layout behaves normally. Run the missing exact-source GenVM/Direct Mode gates in the pinned reviewer environment if the steward requires them.
 
 ## Frontend
 
 The dApp is stamped to the runtime-tested StudioNet deployment by default. `VITE_CONTRACT_ADDRESS` remains an optional override.
 
-The final UI was redesigned for reviewer usability rather than visual novelty: persistent left navigation, a three-step overview, dedicated Seed / Retry / Resolve / Inspect pages, explicit role/status cards, one-click loading of verified runtime cases, and a separate Runtime Evidence page. The project mark is included at `public/logo.png`; the wider brand lockup and UI reference are stored under `public/`.
+The final UI was redesigned for reviewer usability rather than visual novelty: persistent left navigation, a three-step overview, dedicated Seed / Retry / Resolve / Inspect pages, explicit role/status cards, one-click loading of verified runtime cases, and a separate Runtime Proof page. The Submit Retry page also includes a signature **Semantic Boundary Scan**: wording visibly exits the decision boundary, the recorded baseline locks in place, candidate evidence is scanned, and the outcome is revealed only after the finalized attempt is read back from StudioNet. It is explanatory motion, not a simulated verdict. The project mark is included at `public/logo.png`; the wider brand lockup and UI reference are stored under `public/`.
 
 The client does not treat `FINALIZED` alone as successful execution. Where an execution enum is exposed it requires `FINISHED_WITH_RETURN`; otherwise each write verifies a method-specific finalized on-chain state postcondition before presenting success.
 

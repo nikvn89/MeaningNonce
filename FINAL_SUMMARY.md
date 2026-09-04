@@ -8,6 +8,7 @@
 - Contract SHA-256: `d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f`
 - Main runtime case: `fcbab56d34ba7520125cc205bf4b1ab392d20d5ac7b0827b32d7b63df5e6bc95`
 - Authority role-guard case: `6f1bc3dcd447849d1aeed5ce9021c6df989792bbf3d6ac9955f38c028023595f`
+- Live dApp: `https://meaning-nonce.vercel.app`
 
 ## Product claim
 
@@ -44,7 +45,7 @@ See `runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md` and `runtime-evidence/RUN
 - `PASS Python compile`
 - `PASS TypeScript/TSX source syntax transpile check`
 
-The package does not claim exact-source `genvm-lint`, Direct Mode, dependency-installed Vite build, or live Vercel browser smoke as PASS unless those gates are executed in the reviewer/deployment environment.
+The package does not claim exact-source `genvm-lint`, Direct Mode, or a dependency-installed local Vite build as PASS in this packaging environment. The live Vercel UI was visually checked from production screenshots and the user confirmed responsive mobile behavior.
 
 ## Final UI / brand
 
@@ -52,13 +53,14 @@ The previous dense single-screen interface was replaced by a more usable workspa
 
 - persistent sidebar navigation;
 - Overview with a clear Seed → Retry → Resolve workflow;
-- dedicated Seed Case, Submit Retry, Resolve, Inspect Cases, and Runtime Evidence pages;
+- dedicated Seed Case, Submit Retry, Resolve, Inspect Cases, and Runtime Proof pages;
 - explicit connected-contract and wallet context;
 - visible authority/requester role context;
 - clearer case status / latest attempt cards;
 - one-click access to verified runtime cases;
 - responsive mobile bottom navigation;
-- new MeaningNonce project logo and brand lockup.
+- new MeaningNonce project logo and brand lockup;
+- signature **Semantic Boundary Scan** on Submit Retry: request wording is visibly excluded, baseline evidence locks, candidate evidence is scanned, and the real outcome appears only after finalized state verification. This is the final source patch to redeploy before submission.
 
 Brand files:
 

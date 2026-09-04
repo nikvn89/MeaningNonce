@@ -81,14 +81,18 @@ Machine-readable states and screenshots are under `runtime-evidence/`.
 
 The checked-in frontend defaults to `0x1A81177f32d22185F421F0019714DCB6e3124263`.
 
-Before publishing the final Vercel evidence:
+Production URL: `https://meaning-nonce.vercel.app`
 
-1. Run `npm install && npm run build` in a networked Node environment.
-2. Deploy the repo to Vercel as a Vite project.
-3. Open the deployed page and confirm the contract field defaults to `0x1A81177f32d22185F421F0019714DCB6e3124263`.
-4. Connect a StudioNet wallet and use **Inspect** on the main case ID.
-5. Confirm it reads `ACCEPTED / CLOSED_ACCEPTED` from finalized state.
-6. Exercise one browser write on a fresh test case; do not claim success from `FINALIZED` alone—verify the method-specific postcondition.
+Observed from the deployed UI screenshots:
+
+1. Contract defaults to `0x1A81177f32d22185F421F0019714DCB6e3124263`.
+2. Overview, Seed Case, Submit Retry, Resolve, Inspect Cases, and Runtime Proof render without desktop layout breakage.
+3. Main verified case loads `ACCEPTED / CLOSED_ACCEPTED` from finalized state.
+4. Authority role-guard case loads `LOCKED_REJECTED`, `attempt_count=0`, `model_calls_this_epoch=0`.
+5. User confirmed the mobile responsive layout behaves normally at phone width.
+6. The Semantic Boundary Scan is UI-only explanatory motion: it does not reveal a verdict until the finalized attempt is read back after the write.
+
+The packaging environment still did not run a dependency-installed local `npm run build`; do not relabel that local gate as PASS merely because the Vercel deployment is live.
 
 ## E. Steward-attack checklist
 
