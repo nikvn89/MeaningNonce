@@ -372,8 +372,9 @@ def test_decline_does_not_refill_budget():
 
 def test_budget_grants_are_bounded_per_epoch():
     c = MeaningNonce(); cid = seed(c)
+    assert c.MAX_BUDGET_GRANTS_PER_EPOCH == 5
     set_sender(ALICE)
-    for i in range(c.MAX_BUDGET_GRANTS_PER_EPOCH):
+    for i in range(5):
         c.grant_retry_budget(cid)
         assert case(c, cid)["budget_grants_this_epoch"] == i + 1
     expect_user_error("BUDGET_GRANT_LIMIT_REACHED", lambda: c.grant_retry_budget(cid))

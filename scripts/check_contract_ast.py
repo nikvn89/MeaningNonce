@@ -48,6 +48,7 @@ assert "authority.as_bytes" in case_id_text and "case_ref.encode" in case_id_tex
 fence_text = text(funcs["_strip_prompt_fence_tokens"])
 assert "re.sub" in fence_text and "IGNORECASE" in fence_text
 assert "untrusted_evidence" in fence_text.lower()
+assert "\\s*" in fence_text, "fence pattern must tolerate whitespace inside the tag"
 assert "for _ in range(8)" in fence_text
 assert "stripped == cleaned" in fence_text
 assert "'[<>]'" in fence_text or '"[<>]"' in fence_text

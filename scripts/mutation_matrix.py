@@ -56,6 +56,12 @@ MUTS = [
     ("M15 fresh rejected forgets grant-cap reset",
      '            case_data["model_calls_this_epoch"] = 0\n            case_data["budget_grants_this_epoch"] = 0',
      '            case_data["model_calls_this_epoch"] = 0'),
+    ("M16 budget-grant cap raised",
+     "    MAX_BUDGET_GRANTS_PER_EPOCH = 5",
+     "    MAX_BUDGET_GRANTS_PER_EPOCH = 100000"),
+    ("M17 fence whitespace tolerance removed",
+     '        pattern = r"<\\s*/?\\s*untrusted_evidence\\s*>"',
+     '        pattern = r"</?untrusted_evidence>"'),
 ]
 
 rows = []
