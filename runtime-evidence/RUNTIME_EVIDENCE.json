@@ -4,7 +4,22 @@
     "contract_address": "0x1A81177f32d22185F421F0019714DCB6e3124263",
     "repo_contract_sha256": "d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f",
     "deployment_ui_observed": "Accepted / FINALIZED",
-    "note": "Explorer could not be fetched from the build environment; address and runtime state were verified through GenLayer Studio screenshots/read methods."
+    "note": "Address, runtime state, and deployed source were verified through GenLayer Studio/StudioNet; source parity is proven after newline normalization.",
+    "source_parity": {
+      "checked_at": "2026-09-05",
+      "rpc_method": "gen_getContractCode",
+      "rpc_request_mode": "legacy address-only",
+      "raw_deployed_bytes": 18982,
+      "raw_deployed_sha256": "b550a8a2afe70b94151e86243fd92912e5f91d31dd82b59e621cb01685c3baab",
+      "expected_crlf_sha256": "b550a8a2afe70b94151e86243fd92912e5f91d31dd82b59e621cb01685c3baab",
+      "normalized_deployed_bytes": 18517,
+      "normalized_deployed_sha256": "d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f",
+      "repo_lf_sha256": "d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f",
+      "result": "SOURCE_PARITY_PROVEN",
+      "note": "Exact source text matches after LF/CRLF normalization; StudioNet returned the deployed copy with CRLF line endings.",
+      "screenshot": "runtime-evidence/screenshots/08_source_parity_proven.png",
+      "verifier": "scripts/verify_deployed_source.sh"
+    }
   },
   "main_case": {
     "case_id": "fcbab56d34ba7520125cc205bf4b1ab392d20d5ac7b0827b32d7b63df5e6bc95",

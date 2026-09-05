@@ -8,7 +8,9 @@
 - Main runtime case: `fcbab56d34ba7520125cc205bf4b1ab392d20d5ac7b0827b32d7b63df5e6bc95`
 - Role-guard case: `6f1bc3dcd447849d1aeed5ce9021c6df989792bbf3d6ac9955f38c028023595f`
 
-The Studio UI showed the deployment as accepted/finalized. This package does **not** claim an Explorer-side source hash comparison because the Explorer was not fetchable from the build environment; the repository source itself is frozen at the SHA above.
+The Studio UI showed the deployment as accepted/finalized. Deployed-source parity was subsequently verified directly through StudioNet `gen_getContractCode` on 2026-09-05. Studio returned 18,982 bytes with CRLF line endings (`b550a8a2afe70b94151e86243fd92912e5f91d31dd82b59e621cb01685c3baab`); newline normalization produced 18,517 bytes with SHA-256 `d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f`, exactly matching the frozen repository source.
+
+Reviewer reproduction: `bash scripts/verify_deployed_source.sh`. Screenshot: `runtime-evidence/screenshots/08_source_parity_proven.png`.
 
 ## Runtime gates observed PASS
 
@@ -41,7 +43,7 @@ pending_attempt_id = ""
 ## Evidence files
 
 - `runtime-evidence/RUNTIME_EVIDENCE.json` — machine-readable runtime snapshots.
-- `runtime-evidence/screenshots/` — key StudioNet transaction screenshots, including the three rollback gates.
+- `runtime-evidence/screenshots/` — key StudioNet transaction screenshots, including the three rollback gates and deployed-source parity proof.
 
 ## Evidence scope
 
