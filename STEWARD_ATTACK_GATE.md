@@ -64,4 +64,4 @@ The decision-authority address cannot submit retries against its own case. This 
 
 ## Required submission result
 
-The frozen StudioNet runtime path is complete; deployed-source parity is proven. An independent final review executed exact-source GenVM lint/typecheck and Direct Mode against SHA `d0fbf198…1934f`. The local packaging environment still does not claim a dependency-installed Vite build. Before submission, the exact final frontend source must be redeployed to Vercel and smoke-checked on the terminal Resolve state. Static checks may never be substituted for executable behavior.
+The frozen StudioNet runtime path is complete; deployed-source parity is proven. Exact-source GenVM lint/typecheck and Direct Mode were executed against SHA `d0fbf198…1934f`. The final frontend is live on Vercel and the terminal Resolve state was smoke-checked in production. The local packaging environment does not separately claim a dependency-installed Vite build. Static checks may never be substituted for executable behavior.
