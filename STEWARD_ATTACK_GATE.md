@@ -12,12 +12,14 @@ The relevant escape paths are still audited:
 - it resets only the distinct-candidate call counter;
 - it never clears the adjudicated-set ledger;
 - at most five budget grants are allowed per epoch, bounding growth of the embedded adjudication ledger;
-- therefore the same evidence set cannot buy a second semantic roll through the budget escape;
+- therefore a candidate with a **committed** adjudication cannot buy a second committed semantic roll through the budget escape;
 - `decline_reopening` returns to the prior baseline but also leaves the material candidate adjudicated;
 - therefore decline cannot be used to reroll the same candidate;
 - `record_fresh_decision(..., "REJECTED", ...)` is the only path that starts a new epoch and clears the ledger, and it is evidence-bound to the pending material attempt.
 
 Known liveness limitation: `submit_retry` is permissionless, so a third-party wallet can consume a case's current three-call budget window. This is not hidden or described as prevented. The authority is the explicit recovery actor through `grant_retry_budget`, and per-requester counters are not used because fresh wallets would reopen unbounded grinding.
+
+Consensus qualification: ledger and budget guards persist only when the semantic transaction reaches validator majority and commits. A no-majority round reverts the whole transaction, leaving no adjudication entry or model-call increment, so that candidate can be submitted again for another consensus round. This is an explicit limitation of the anti-reroll claim, not hidden as impossible.
 
 Adversarial requirement: disable any one of the ledger persistence, decline no-refill, fresh-rejection reset, grant-cap, role, or fence guards and at least one executable test must fail.
 
@@ -62,4 +64,4 @@ The decision-authority address cannot submit retries against its own case. This 
 
 ## Required submission result
 
-The frozen StudioNet runtime path is complete. Before resubmission, do not overclaim any unexecuted repository gate: rerun official Direct Mode, GenVM lint/typecheck, and the frontend production build in a compatible networked environment, and retain an exact-source independent review artifact if the steward requires it. Static checks may never be substituted for those executable gates.
+The frozen StudioNet runtime path is complete; deployed-source parity is proven. An independent final review executed exact-source GenVM lint/typecheck and Direct Mode against SHA `d0fbf198…1934f`. The local packaging environment still does not claim a dependency-installed Vite build. Before submission, the exact final frontend source must be redeployed to Vercel and smoke-checked on the terminal Resolve state. Static checks may never be substituted for executable behavior.

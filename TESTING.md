@@ -28,22 +28,25 @@ PASS AST contract invariants
 PASS actual-contract off-chain logic: 15/15
 PASS executable adversarial actual-contract suite: 12/12
 PASS prompt-fence probe: 0/9 bypasses
-caught mutations: 15/15
+caught mutations: 17/17
 PASS Python compile
 ```
 
 Evidence-strength rule: AST/grep/vector checks are **static only**. `test:logic` and `test:adversarial` execute the actual production contract source under a stub, but are still off-chain behavior rather than GenVM runtime proof.
 
-## B. Exact-source GenVM / Direct Mode / frontend build — rerun before submission when required
+## B. Exact-source GenVM / Direct Mode — independently re-executed
 
-Pinned Python tooling in `requirements.txt`:
+Pinned Python tooling remains in `requirements.txt`. An independent final review executed the frozen contract source at SHA `d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f` and reported:
 
 ```text
-genlayer-test==0.29.2
-genvm-linter==0.11.0
+genvm-lint check / validation: PASS
+genvm-lint typecheck: PASS
+pytest tests/direct/ -q: 19 passed
 ```
 
-Use Python 3.12+ in the reviewer environment:
+The local packaging environment itself does not have those GenLayer Python packages installed, so it does not pretend to reproduce the independent run. A dependency-installed local `npm run build` was also not rerun here; Vercel is the production build surface.
+
+Reviewer commands remain:
 
 ```bash
 python -m pip install -r requirements.txt
@@ -53,9 +56,27 @@ npm install
 npm run build
 ```
 
-The packaging environment used here has Python 3.13 without those GenLayer packages installed, and its `npm install` package fetch timed out. Those exact-source gates are therefore **not claimed PASS here**.
+## C. Deployed-source parity — PASS
 
-## C. StudioNet runtime — PASS
+Reviewer-runnable check:
+
+```bash
+bash scripts/verify_deployed_source.sh
+```
+
+Observed on 2026-09-05:
+
+```text
+Raw deployed SHA256:        b550a8a2afe70b94151e86243fd92912e5f91d31dd82b59e621cb01685c3baab
+Expected CRLF SHA256:       b550a8a2afe70b94151e86243fd92912e5f91d31dd82b59e621cb01685c3baab
+Normalized deployed SHA256: d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f
+Expected LF source SHA256:  d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f
+SOURCE PARITY PROVEN
+```
+
+StudioNet returned the same source text with CRLF line endings; normalizing line endings gives the exact frozen repository hash. Screenshot: `runtime-evidence/screenshots/08_source_parity_proven.png`.
+
+## D. StudioNet runtime — PASS
 
 Runtime sequence actually exercised on `0x1A81177f32d22185F421F0019714DCB6e3124263`:
 
@@ -77,7 +98,7 @@ Runtime sequence actually exercised on `0x1A81177f32d22185F421F0019714DCB6e31242
 
 Machine-readable states and screenshots are under `runtime-evidence/`.
 
-## D. Frontend production verification
+## E. Frontend production verification
 
 The checked-in frontend defaults to `0x1A81177f32d22185F421F0019714DCB6e3124263`.
 
@@ -92,9 +113,9 @@ Observed from the deployed UI screenshots:
 5. User confirmed the mobile responsive layout behaves normally at phone width.
 6. The Semantic Boundary Scan is UI-only explanatory motion: it does not reveal a verdict until the finalized attempt is read back after the write.
 
-The packaging environment still did not run a dependency-installed local `npm run build`; do not relabel that local gate as PASS merely because the Vercel deployment is live.
+The packaging environment still did not run a dependency-installed local `npm run build`; do not relabel that local gate as PASS merely because Vercel is live. Before submission, redeploy the exact final `src/App.tsx` and smoke-check the Resolve page on the known terminal case.
 
-## E. Steward-attack checklist
+## F. Steward-attack checklist
 
 Before resubmission, verify all three mandatory anti-pattern gates:
 
@@ -102,4 +123,4 @@ Before resubmission, verify all three mandatory anti-pattern gates:
 - **Immutability ≠ provenance:** never call self-declared/commit-pinned data canonical authority without an independent trust root.
 - **Static evidence ≠ executable behavioral proof:** never present marker/vector/source checks as contract runtime tests.
 
-MeaningNonce's runtime evidence above directly addresses the third gate; its README explicitly narrows the trust-root claim for the second.
+MeaningNonce's runtime evidence above directly addresses the third gate; its README explicitly narrows the trust-root claim for the second. The anti-reroll ledger/budget claims are explicitly scoped to **committed** consensus rounds; a no-majority round reverts and persists neither ledger nor budget state.

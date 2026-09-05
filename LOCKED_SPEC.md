@@ -23,9 +23,11 @@ MeaningNonce keeps the previous decision and evidence on-chain.
 8. **Removal cannot manufacture novelty.** Omission of any baseline item is blocked before model execution.
 9. **No additions means replay.** Reorder, duplicates, and whitespace-only edits become `EXACT_REPLAY` with `model_called=false`.
 10. **Only explicit additions reach consensus.** Inputs are rejection reason + full prior baseline + additions; no external fetch/oracle.
-11. **Same candidate set gets one semantic adjudication per epoch.** Reuse returns `ALREADY_ADJUDICATED`, no model call.
-12. **Distinct-junk grinding is bounded per budget window.** Maximum three distinct candidate sets reach consensus before authority intervention.
-13. **Budget escape cannot reroll an existing set.** `grant_retry_budget` never clears the adjudicated ledger, and at most five budget grants are allowed per epoch so the per-case ledger is deterministically bounded.
+11. **Same candidate set gets one committed semantic adjudication per epoch.** After a semantic round commits, reuse returns `ALREADY_ADJUDICATED`, no model call.
+12. **Distinct-junk grinding is bounded per committed budget window.** At most three distinct candidate sets can commit semantic adjudications before authority intervention.
+13. **Budget escape cannot reroll a committed existing set.** `grant_retry_budget` never clears the adjudicated ledger, and at most five budget grants are allowed per epoch so the per-case ledger is deterministically bounded.
+
+**Consensus qualification for #11–#13:** these guards bind committed rounds. If a semantic round fails to reach validator majority, the whole transaction reverts, so no adjudication entry or budget increment persists; that candidate may be submitted again for another consensus round. Screenshot 05 shows one validator disagreement on a materiality round that still reached quorum and committed.
 14. **Semantic output is narrow.** `MATERIAL_DELTA` may reopen; `IMMATERIAL_DELTA` remains locked. Neither decides the underlying case.
 15. **Fresh decision is authority-only and evidence-bound.** It must reference exactly the candidate evidence set that caused reopening.
 16. **Decline cannot reroll.** `decline_reopening` restores the prior locked baseline, but the material candidate remains adjudicated.

@@ -9,6 +9,7 @@
 - Main runtime case: `fcbab56d34ba7520125cc205bf4b1ab392d20d5ac7b0827b32d7b63df5e6bc95`
 - Authority role-guard case: `6f1bc3dcd447849d1aeed5ce9021c6df989792bbf3d6ac9955f38c028023595f`
 - Live dApp: `https://meaning-nonce.vercel.app`
+- Deployed-source parity: **PROVEN** (`gen_getContractCode`; CRLF-normalized deployed hash equals frozen repo hash)
 
 ## Product claim
 
@@ -41,11 +42,11 @@ See `runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md` and `runtime-evidence/RUN
 - `PASS actual-contract off-chain logic: 15/15`
 - `PASS executable adversarial actual-contract suite: 12/12`
 - `PASS prompt-fence probe: 0/9 bypasses`
-- `PASS mutation matrix: 15/15 caught`
+- `PASS mutation matrix: 17/17 caught`
 - `PASS Python compile`
 - `PASS TypeScript/TSX source syntax transpile check`
 
-The package does not claim exact-source `genvm-lint`, Direct Mode, or a dependency-installed local Vite build as PASS in this packaging environment. The live Vercel UI was visually checked from production screenshots and the user confirmed responsive mobile behavior.
+The local packaging environment does not claim a dependency-installed Vite build. Separately, an independent final review executed the exact frozen contract source and reported GenVM lint/validation PASS, typecheck PASS, and official Direct Mode **19 passed**. The live Vercel UI was visually checked from production screenshots and responsive mobile behavior was user-confirmed.
 
 ## Final UI / brand
 
@@ -60,7 +61,8 @@ The previous dense single-screen interface was replaced by a more usable workspa
 - one-click access to verified runtime cases;
 - responsive mobile bottom navigation;
 - new MeaningNonce project logo and brand lockup;
-- signature **Semantic Boundary Scan** on Submit Retry: request wording is visibly excluded, baseline evidence locks, candidate evidence is scanned, and the real outcome appears only after finalized state verification. This is the final source patch to redeploy before submission.
+- signature **Semantic Boundary Scan** on Submit Retry: request wording is visibly excluded, baseline evidence locks, candidate evidence is scanned, and the real outcome appears only after finalized state verification;
+- state-gated Resolve UX: only `AWAITING_FRESH_DECISION` exposes authority write controls, while `CLOSED_ACCEPTED` and `LOCKED_REJECTED` show finalized read-only decision/baseline state. The exact final frontend source must be the version deployed before submission.
 
 Brand files:
 
@@ -77,4 +79,4 @@ The final package explicitly applies the reusable rules learned from earlier Gen
 - **Immutability ≠ provenance:** commit pinning/self-consistency is not authority or canonical publisher proof.
 - **Static evidence ≠ executable behavioral proof:** source markers and vector files do not replace executed contract behavior.
 
-MeaningNonce's own trust root is therefore described only as a contract-local decision authority, and its core claims are backed by executed StudioNet behavior.
+MeaningNonce's own trust root is therefore described only as a contract-local decision authority, and its core claims are backed by executed StudioNet behavior. Anti-reroll ledger/budget guarantees are explicitly scoped to committed consensus rounds; no-majority rounds revert without persistent ledger/budget state.
