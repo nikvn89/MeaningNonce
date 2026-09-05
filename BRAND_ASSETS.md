@@ -17,9 +17,9 @@ Core visual idea: **different wording, same semantic boundary**.
 ## Files
 
 - `public/logo.png` — square project mark for header, README, favicon/social usage.
-- `public/brand-lockup.png` — generated full MeaningNonce logo lockup.
+- `public/brand-lockup.png` — full MeaningNonce logo lockup.
 - `public/ui-concept.png` — redesign reference used for the final application layout.
 
-## Generation prompt/spec
+## Design direction
 
-Create a premium cybersecurity / agentic-infrastructure logo for **MeaningNonce**, a GenLayer project that prevents AI agents from verdict-shopping by rewording rejected requests. Build a geometric monogram combining the letters M and N inside concentric semantic-boundary rings with subtle crossing lines. The symbol should feel like a semantic nonce, replay guard, and verification shield rather than a court or generic AI brain. Use a midnight navy base with violet-to-magenta highlights, crisp vector-like geometry, restrained glow, no mascots, no scales of justice, no blockchain cliché, and strong legibility at 32 px. Provide a square icon and a horizontal wordmark lockup.
+The visual system uses a geometric M/N monogram inside concentric semantic-boundary rings, with a midnight navy base, violet-to-magenta highlights, restrained glow, and strong small-size legibility. The identity avoids court imagery, generic AI-brain motifs, and blockchain clichés.
