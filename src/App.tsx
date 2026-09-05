@@ -166,7 +166,7 @@ function App() {
     } catch (e:any) { setNotice(e?.message || String(e)); }
   }
 
-  async function inspect(targetCaseId = caseId, targetAttemptId = attemptId, hydrateRetry = false) {
+  async function inspect(targetCaseId = caseId, targetAttemptId = attemptId, hydrateRetry = false, hydrateResolve = false) {
     if (!validAddress || !targetCaseId) { setNotice('Enter a case ID to inspect.'); return; }
     setBusy(true);
     try {
@@ -181,10 +181,13 @@ function App() {
         setScanResult(null);
         setScanPhase('idle');
       }
-      const inspectAttemptId = targetAttemptId || c.latest_attempt_id || '';
+      const inspectAttemptId = targetAttemptId || (hydrateResolve && c.status === 'AWAITING_FRESH_DECISION' ? c.pending_attempt_id : '') || c.latest_attempt_id || '';
       if (inspectAttemptId) {
         const a = await readJson<AttemptRecord>(contractAddress as `0x${string}`, 'get_attempt', [inspectAttemptId]);
         setAttemptId(inspectAttemptId); setAttemptData(a);
+        if (hydrateResolve && c.status === 'AWAITING_FRESH_DECISION' && a) {
+          setFreshEvidence(a.candidate_evidence.join('\n'));
+        }
       } else {
         setAttemptData(null); setAttemptId('');
       }
@@ -296,17 +299,30 @@ function App() {
         subtitle="Authority-only. A fresh decision is available only after a MATERIAL_DELTA moved the case to AWAITING_FRESH_DECISION."
         aside={<SideState caseData={caseData} attemptData={attemptData} account={account} />}
       >
-        <CaseLoader caseId={caseId} setCaseId={setCaseId} busy={busy} onLoad={() => inspect(caseId, '')}/>
-        <div className="decisionGrid">
-          <button className={freshDecision==='REJECTED' ? 'decisionCard selected' : 'decisionCard'} onClick={()=>setFreshDecision('REJECTED')}><b>REJECTED</b><span>Adopt the reopened evidence as the new rejection baseline.</span></button>
-          <button className={freshDecision==='ACCEPTED' ? 'decisionCard selected accept' : 'decisionCard'} onClick={()=>setFreshDecision('ACCEPTED')}><b>ACCEPTED</b><span>Close the case. Future retries are not allowed.</span></button>
-        </div>
-        <Field label="Decision reason"><textarea value={freshReason} onChange={e=>setFreshReason(e.target.value)}/></Field>
-        <Field label="Evidence reviewed" hint="Must match the reopened MATERIAL_DELTA attempt exactly."><textarea className="tall" value={freshEvidence} onChange={e=>setFreshEvidence(e.target.value)}/></Field>
-        <button className="primaryButton" disabled={busy || !isAuthority || caseData?.status !== 'AWAITING_FRESH_DECISION'} onClick={resolve}>Record fresh {freshDecision.toLowerCase()} decision</button>
-        <div className="divider"><span>or keep the prior baseline</span></div>
-        <Field label="Decline note"><textarea value={declineNote} onChange={e=>setDeclineNote(e.target.value)}/></Field>
-        <button className="secondaryButton" disabled={busy || !isAuthority || caseData?.status !== 'AWAITING_FRESH_DECISION'} onClick={decline}>Decline reopening</button>
+        <CaseLoader
+          caseId={caseId}
+          setCaseId={(value) => { setCaseId(value); if (value !== caseData?.case_id) { setCaseData(null); setAttemptData(null); } }}
+          busy={busy}
+          onLoad={() => void inspect(caseId, '', false, true)}
+        />
+        {!loadedCaseMatches ? <div className="detailCard"><p className="emptyState">Load a finalized case to see whether a fresh resolution is currently available.</p></div> : caseData?.status === 'AWAITING_FRESH_DECISION' ? <>
+          <div className="decisionGrid">
+            <button className={freshDecision==='REJECTED' ? 'decisionCard selected' : 'decisionCard'} onClick={()=>setFreshDecision('REJECTED')}><b>REJECTED</b><span>Adopt the reopened evidence as the new rejection baseline.</span></button>
+            <button className={freshDecision==='ACCEPTED' ? 'decisionCard selected accept' : 'decisionCard'} onClick={()=>setFreshDecision('ACCEPTED')}><b>ACCEPTED</b><span>Close the case. Future retries are not allowed.</span></button>
+          </div>
+          <Field label="Decision reason"><textarea value={freshReason} onChange={e=>setFreshReason(e.target.value)}/></Field>
+          <Field label="Evidence reviewed" hint="Prefilled from the pending MATERIAL_DELTA attempt and must match it exactly."><textarea className="tall" value={freshEvidence} onChange={e=>setFreshEvidence(e.target.value)}/></Field>
+          <button className="primaryButton" disabled={busy || !isAuthority} onClick={resolve}>Record fresh {freshDecision.toLowerCase()} decision</button>
+          <div className="divider"><span>or keep the prior baseline</span></div>
+          <Field label="Decline note"><textarea value={declineNote} onChange={e=>setDeclineNote(e.target.value)}/></Field>
+          <button className="secondaryButton" disabled={busy || !isAuthority} onClick={decline}>Decline reopening</button>
+          {!isAuthority && <div className="warningBox">Connect this case's decision-authority wallet to record or decline the fresh decision.</div>}
+        </> : <div className="detailCard">
+          <div className="detailTitle"><Pill value={caseData.status}/><b>{caseData.case_ref}</b></div>
+          {caseData.status === 'CLOSED_ACCEPTED' ? <div className="terminalBox"><b>Final decision: ACCEPTED.</b><span>Case closed. No further resolution or retry is allowed.</span></div> : <div className="pendingBox"><b>No reopened case is pending.</b><span>A MATERIAL_DELTA retry must move this case to AWAITING_FRESH_DECISION before the authority can resolve it.</span></div>}
+          <div className="reasonBox"><span>Finalized decision reason</span><p>{caseData.decision_reason}</p></div>
+          <div className="evidenceStack"><span>{caseData.status === 'CLOSED_ACCEPTED' ? 'Final baseline evidence' : 'Current rejection baseline'}</span>{caseData.baseline_evidence.map((x,i)=><div key={i}>{i+1}. {x}</div>)}</div>
+        </div>}
       </PageLayout>}
 
       {page === 'inspect' && <PageLayout
