@@ -1,6 +1,6 @@
-# MeaningNonce — locked Agent Tank scope
+# MeaningNonce — locked product scope
 
-## Source-of-truth pitch
+## Product premise
 
 An AI agent gets rejected, then keeps rewriting the same request until one version gets through. Traditional nonces stop the exact same transaction from being replayed; they do not help when the wording changes but the request and evidence are basically the same.
 

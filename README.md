@@ -80,7 +80,7 @@ PASS AST contract invariants
 PASS actual-contract off-chain logic: 15/15
 PASS executable adversarial actual-contract suite: 12/12
 PASS prompt-fence probe: 0/9 bypasses
-caught mutations: 15/15
+caught mutations: 17/17
 PASS Python compile
 ```
 
@@ -98,8 +98,7 @@ Brand rationale and the reusable image-generation prompt/spec are documented in 
 
 ## Reviewer entry points
 
-- `LOCKED_SPEC.md` — scope lock from the Agent Tank pitch.
-- `STEWARD_ATTACK_GATE.md` — mandatory anti-pattern checks learned from prior steward reviews.
+- `LOCKED_SPEC.md` — locked product scope and implementation boundaries.
 - `contracts/MeaningNonce.py` — frozen production source.
 - `runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md` — StudioNet behavior proof.
 - `runtime-evidence/RUNTIME_EVIDENCE.json` — machine-readable snapshots.

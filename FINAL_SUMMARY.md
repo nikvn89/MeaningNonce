@@ -41,7 +41,7 @@ See `runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md` and `runtime-evidence/RUN
 - `PASS actual-contract off-chain logic: 15/15`
 - `PASS executable adversarial actual-contract suite: 12/12`
 - `PASS prompt-fence probe: 0/9 bypasses`
-- `PASS mutation matrix: 15/15 caught`
+- `PASS mutation matrix: 17/17 caught`
 - `PASS Python compile`
 - `PASS TypeScript/TSX source syntax transpile check`
 
@@ -69,12 +69,12 @@ Brand files:
 - `public/ui-concept.png`
 - `BRAND_ASSETS.md`
 
-## Steward rules applied
+## Security and scope constraints
 
-The final package explicitly applies the reusable rules learned from earlier GenLayer reviews:
+MeaningNonce keeps its claims narrow and explicit:
 
-- **Non-bypassable consequence:** audit early/mid/late escape and refund routes.
-- **Immutability ≠ provenance:** commit pinning/self-consistency is not authority or canonical publisher proof.
-- **Static evidence ≠ executable behavioral proof:** source markers and vector files do not replace executed contract behavior.
+- **No external-world provenance claim:** the authority is contract-local; immutable or self-declared data is not treated as canonical truth.
+- **Executable behavior over static markers:** the core anti-reroll claims are backed by executed StudioNet behavior and repository-executable tests.
+- **Bounded semantic scope:** GenLayer is used only to classify whether explicit new evidence is materially relevant to reopening the recorded rejection.
 
-MeaningNonce's own trust root is therefore described only as a contract-local decision authority, and its core claims are backed by executed StudioNet behavior.
+The contract does not claim to arbitrate the underlying case or establish the truth of supplied evidence.

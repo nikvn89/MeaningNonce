@@ -1,6 +1,6 @@
 {
   "project": "MeaningNonce",
-  "build": "submission-final-semantic-boundary-scan-terminal-baseline-sync",
+  "build": "public-final-hygiene-clean",
   "network": "GenLayer StudioNet",
   "live_dapp": "https://meaning-nonce.vercel.app",
   "contract_address": "0x1A81177f32d22185F421F0019714DCB6e3124263",
@@ -17,7 +17,7 @@
     "actual_contract_offchain_logic": "15/15 PASS",
     "executable_adversarial_actual_contract": "12/12 PASS",
     "prompt_fence_probe": "0/9 bypasses",
-    "mutation_matrix": "15/15 caught",
+    "mutation_matrix": "17/17 caught",
     "typescript_tsx_syntax_transpile": "PASS",
     "css_parse": "PASS"
   },
@@ -41,11 +41,9 @@
     ".env.example": "2ebd083726e14a446f2d0548f2480173e7190b392068d993e0c5bb78e0792159",
     ".gitignore": "ac010f83e1ea319f29713d562b21a63cdb6ac4551edd28c4b6faa04a473be412",
     "BRAND_ASSETS.md": "ef461062f5b115ec1278eaae9d00c53b33df4fd3c9a31453ee68f0802bcc68ff",
-    "FINAL_SUMMARY.md": "722b4a25ce72032b8273b70b8a9a643afe8a03bb5b839cb54e2a360305e4a7b7",
-    "LOCKED_SPEC.md": "0d8ae5257886e3bf97493b4c6fccd9c8228e20e78ed6e0dc0243e274b9638ee7",
-    "README.md": "dbef0bfca8669b5810a4832fcc0fcec54636aa45e61d7e0353badfe495a812d0",
-    "STEWARD_ATTACK_GATE.md": "e44e4a09ba427ddc980cdc537aea2d71ae774bee41e17bff01834f03c740308e",
-    "SUBMISSION_READINESS.md": "573380512622861040839fe06ed19cdd3a1a90152cf79942cd4b865ce7283c14",
+    "FINAL_SUMMARY.md": "68b0a35ca8244e8243c26920552e9faae97f891f2fd5692a1c2ff67dc4c6b0b6",
+    "LOCKED_SPEC.md": "6cd2b65da256265f8fe82335c7a469809d8d87e85bb9800eb4fdbbe8e21f78af",
+    "README.md": "8db0809976945da90c10d2eee193d495a731b87cdc0ec95d14bd1ae52858e045",
     "TESTING.md": "b3ff41ceac1930d9092bd4ef6bd06b9a9ddf5ea9e3e264a645d83b6a0af99e87",
     "contracts/MeaningNonce.py": "d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f",
     "index.html": "ce36a35dd94d953cafe5d6275279a8c5cab225fb5e8f1747c435ef0308b41bbe",
@@ -83,5 +81,6 @@
     "tsconfig.json": "67312658d22f72e4310e3c1410ea5862b1489055bbd9d70107f3f3cbbb86bdf8",
     "tsconfig.node.json": "992e6fe8a58d16d79389ecdc94a55d2a0ce649245fba3a6d20946b6200cd26e0",
     "vite.config.ts": "0ea84b4e2909b04e4c1cb1b92392a9f85bcb46605472763b15935d3498ba8ed3"
-  }
+  },
+  "public_submission_hygiene": "PASS"
 }
