@@ -73,7 +73,7 @@ npm run test:direct
 npm run build
 ```
 
-Re-executed in the current packaging environment:
+Recorded packaging-environment results:
 
 ```text
 PASS AST contract invariants
@@ -84,24 +84,26 @@ caught mutations: 17/17
 PASS Python compile
 ```
 
-The current packaging environment does not have `genvm-linter` / `genlayer-test` installed and its package fetch timed out during `npm install`; therefore this package does **not** falsely relabel those exact-source gates as PASS. The production frontend is live on Vercel and was visually checked from production screenshots across the main navigation, verified-case views, terminal-state UX, and responsive layout. Run the missing exact-source GenVM/Direct Mode gates in the pinned reviewer environment if the steward requires them.
+The packaging environment did not have `genvm-linter` / `genlayer-test` installed and its package fetch timed out during `npm install`, so those exact-source gates are not relabelled as locally reproduced PASS. The production frontend is live on Vercel. Exact-source GenVM/Direct Mode commands remain documented in `TESTING.md` for reproducible execution in an environment with the pinned dependencies.
 
 ## Frontend
 
 The dApp is stamped to the runtime-tested StudioNet deployment by default. `VITE_CONTRACT_ADDRESS` remains an optional override.
 
-The final UI was redesigned for reviewer usability rather than visual novelty: persistent left navigation, a three-step overview, dedicated Seed / Retry / Resolve / Inspect pages, explicit role/status cards, one-click loading of verified runtime cases, and a separate Runtime Proof page. The Submit Retry page also includes a signature **Semantic Boundary Scan**: wording visibly exits the decision boundary, the recorded baseline locks in place, candidate evidence is scanned, and the outcome is revealed only after the finalized attempt is read back from StudioNet. It is explanatory motion, not a simulated verdict. The project mark is included at `public/logo.png`; the wider brand lockup and UI reference are stored under `public/`.
+The interface is organized as a Web3 protocol workspace with persistent navigation, connected-contract context, clear status panels, and dedicated Seed / Retry / Resolve / Inspect / Verification surfaces. **Action forms are empty by default**: no runtime case, rejection reason, request text, evidence set, or decision is prefilled. Runtime reference cases are isolated to inspection and verification surfaces so reviewers can inspect executed behavior without turning transaction forms into a scripted demo.
+
+The Submit Retry page includes the signature **Semantic Boundary Scan**: wording visibly exits the decision boundary, the loaded baseline locks in place, candidate evidence is scanned, and the outcome is revealed only after the finalized attempt is read back from StudioNet. It is explanatory motion, not a simulated verdict.
 
 The client does not treat `FINALIZED` alone as successful execution. Where an execution enum is exposed it requires `FINISHED_WITH_RETURN`; otherwise each write verifies a method-specific finalized on-chain state postcondition before presenting success.
 
-Brand rationale and the reusable image-generation prompt/spec are documented in [`BRAND_ASSETS.md`](./BRAND_ASSETS.md).
+Brand files are `public/logo.png` and `public/brand-lockup.png`; design rationale is documented in [`BRAND_ASSETS.md`](./BRAND_ASSETS.md).
 
 ## Reviewer entry points
 
 - `LOCKED_SPEC.md` — locked product scope and implementation boundaries.
 - `contracts/MeaningNonce.py` — frozen production source.
-- `runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md` — StudioNet behavior proof.
+- `runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md` — StudioNet behavior verification.
 - `runtime-evidence/RUNTIME_EVIDENCE.json` — machine-readable snapshots.
 - `scripts/test_contract_logic.py` — executable actual-source behavior tests.
 - `tests/direct/` — GenLayer Direct Mode tests.
-- `TESTING.md` — exact reviewer/reproduction path.
+- `TESTING.md` — exact reproduction and verification path.

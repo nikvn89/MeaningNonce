@@ -16,7 +16,7 @@ MeaningNonce is a semantic anti-verdict-shopping primitive for AI-agent retries.
 
 It is not an AI court, does not decide whether outside-world evidence is true, and does not treat immutable/self-declared data as provenance.
 
-## Final runtime proof
+## StudioNet runtime verification
 
 The final StudioNet deployment exercised the load-bearing behavior:
 
@@ -45,28 +45,28 @@ See `runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md` and `runtime-evidence/RUN
 - `PASS Python compile`
 - `PASS TypeScript/TSX source syntax transpile check`
 
-The package does not claim exact-source `genvm-lint`, Direct Mode, or a dependency-installed local Vite build as PASS in this packaging environment. The live Vercel UI was visually checked from production screenshots, including responsive behavior.
+The package does not claim exact-source `genvm-lint`, Direct Mode, or a dependency-installed local Vite build as PASS in the packaging environment where those dependencies were unavailable.
 
 ## Final UI / brand
 
-The previous dense single-screen interface was replaced by a more usable workspace:
+The final application is organized as a Web3 protocol workspace:
 
 - persistent sidebar navigation;
 - Overview with a clear Seed → Retry → Resolve workflow;
-- dedicated Seed Case, Submit Retry, Resolve, Inspect Cases, and Runtime Proof pages;
-- explicit connected-contract and wallet context;
+- dedicated Seed Case, Submit Retry, Resolve, Inspect Cases, and Verification pages;
+- connected-contract and wallet context;
 - visible authority/requester role context;
-- clearer case status / latest attempt cards;
-- one-click access to verified runtime cases;
-- responsive mobile bottom navigation;
-- new MeaningNonce project logo and brand lockup;
-- signature **Semantic Boundary Scan** on Submit Retry: request wording is visibly excluded, baseline evidence locks, candidate evidence is scanned, and the real outcome appears only after finalized state verification. This interaction is live in the final production deployment.
+- clear case status and latest-attempt cards;
+- action forms that are **empty by default** rather than preloaded with runtime/demo values;
+- verified runtime references isolated to Inspect Cases and Verification;
+- responsive navigation;
+- MeaningNonce project logo and brand lockup;
+- signature **Semantic Boundary Scan** on Submit Retry: request wording is visibly excluded, baseline evidence locks, candidate evidence is scanned, and the real outcome appears only after finalized state verification.
 
 Brand files:
 
 - `public/logo.png`
 - `public/brand-lockup.png`
-- `public/ui-concept.png`
 - `BRAND_ASSETS.md`
 
 ## Security and scope constraints

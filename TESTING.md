@@ -32,11 +32,11 @@ caught mutations: 17/17
 PASS Python compile
 ```
 
-Evidence-strength rule: AST/grep/vector checks are **static only**. `test:logic` and `test:adversarial` execute the actual production contract source under a stub, but are still off-chain behavior rather than GenVM runtime proof.
+Evidence-strength rule: AST/grep/vector checks are **static only**. `test:logic` and `test:adversarial` execute the actual production contract source under a stub, but are still off-chain behavior rather than GenVM runtime execution.
 
-## B. Exact-source GenVM / Direct Mode — independently re-executed
+## B. Exact-source GenVM / Direct Mode path
 
-Pinned Python tooling remains in `requirements.txt`. An independent final review executed the frozen contract source at SHA `d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f` and reported:
+Pinned Python tooling remains in `requirements.txt`. Recorded exact-source results for the frozen contract SHA are:
 
 ```text
 genvm-lint check / validation: PASS
@@ -44,9 +44,9 @@ genvm-lint typecheck: PASS
 pytest tests/direct/ -q: 19 passed
 ```
 
-The local packaging environment itself does not have those GenLayer Python packages installed, so it does not pretend to reproduce the independent run. A dependency-installed local `npm run build` was also not rerun here; Vercel is the production build surface.
+The packaging environment itself did not have those GenLayer Python packages installed, so it does not claim to reproduce those commands locally. A dependency-installed local `npm run build` was also not rerun there; Vercel is the production build surface.
 
-Reviewer commands remain:
+Reproduction commands:
 
 ```bash
 python -m pip install -r requirements.txt
@@ -58,7 +58,7 @@ npm run build
 
 ## C. Deployed-source parity — PASS
 
-Reviewer-runnable check:
+Repository check:
 
 ```bash
 bash scripts/verify_deployed_source.sh
@@ -98,29 +98,30 @@ Runtime sequence actually exercised on `0x1A81177f32d22185F421F0019714DCB6e31242
 
 Machine-readable states and screenshots are under `runtime-evidence/`.
 
-## E. Frontend production verification
+## E. Frontend verification path
 
 The checked-in frontend defaults to `0x1A81177f32d22185F421F0019714DCB6e3124263`.
 
 Production URL: `https://meaning-nonce.vercel.app`
 
-Observed from the deployed UI screenshots:
+Expected submission-facing behavior:
 
-1. Contract defaults to `0x1A81177f32d22185F421F0019714DCB6e3124263`.
-2. Overview, Seed Case, Submit Retry, Resolve, Inspect Cases, and Runtime Proof render without desktop layout breakage.
-3. Main verified case loads `ACCEPTED / CLOSED_ACCEPTED` from finalized state.
-4. Authority role-guard case loads `LOCKED_REJECTED`, `attempt_count=0`, `model_calls_this_epoch=0`.
-5. User confirmed the mobile responsive layout behaves normally at phone width.
-6. The Semantic Boundary Scan is UI-only explanatory motion: it does not reveal a verdict until the finalized attempt is read back after the write.
+1. Overview, Seed Case, Submit Retry, Resolve, Inspect Cases, and Verification are separate navigation surfaces.
+2. Seed Case opens with empty case reference, rejection reason, and baseline evidence fields.
+3. Submit Retry opens with empty case ID/request fields and does not preload candidate evidence before a finalized case is loaded.
+4. Resolve opens with no preselected decision or prefilled reason/evidence; decision controls appear only from loaded case state.
+5. Inspect Cases starts empty but exposes verified runtime case shortcuts separately from the input form.
+6. Verification presents executed StudioNet outcomes and deployment links without preloading transaction forms.
+7. The Semantic Boundary Scan is UI-only explanatory motion: it does not reveal a verdict until the finalized attempt is read back after the write.
 
-The packaging environment still did not run a dependency-installed local `npm run build`; do not relabel that local gate as PASS merely because Vercel is live. Before submission, redeploy the exact final `src/App.tsx` and smoke-check the Resolve page on the known terminal case.
+A dependency-installed local `npm run build` is not claimed as reproduced in the packaging environment where package installation was unavailable.
 
-## F. Steward-attack checklist
+## F. Security review checklist
 
-Before resubmission, verify all three mandatory anti-pattern gates:
+The project is evaluated against three recurring failure modes:
 
-- **Non-bypassable consequence:** audit cancel/decline/timeout/refund/close paths so no claimed consequence can be escaped by an early exit.
+- **Non-bypassable consequence:** audit decline/close and related escape paths so a claimed consequence cannot be escaped by an early exit.
 - **Immutability ≠ provenance:** never call self-declared/commit-pinned data canonical authority without an independent trust root.
 - **Static evidence ≠ executable behavioral proof:** never present marker/vector/source checks as contract runtime tests.
 
-MeaningNonce's runtime evidence above directly addresses the third gate; its README explicitly narrows the trust-root claim for the second. The anti-reroll ledger/budget claims are explicitly scoped to **committed** consensus rounds; a no-majority round reverts and persists neither ledger nor budget state.
+MeaningNonce's StudioNet evidence addresses executable behavior; its README explicitly narrows the trust-root claim. The anti-reroll ledger/budget claims are scoped to **committed** consensus rounds; a no-majority round reverts and persists neither ledger nor budget state.

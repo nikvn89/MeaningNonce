@@ -18,8 +18,7 @@ Core visual idea: **different wording, same semantic boundary**.
 
 - `public/logo.png` — square project mark for header, README, favicon/social usage.
 - `public/brand-lockup.png` — full MeaningNonce logo lockup.
-- `public/ui-concept.png` — redesign reference used for the final application layout.
 
 ## Design direction
 
-The visual system uses a geometric M/N monogram inside concentric semantic-boundary rings, with a midnight navy base, violet-to-magenta highlights, restrained glow, and strong small-size legibility. The identity avoids court imagery, generic AI-brain motifs, and blockchain clichés.
+The visual system uses a geometric M/N monogram inside concentric semantic-boundary rings, with a midnight navy base, violet-to-magenta highlights, restrained glow, protocol-console details, and strong small-size legibility. The identity avoids court imagery, generic AI-brain motifs, and generic blockchain iconography while keeping a distinct Web3 application feel.
