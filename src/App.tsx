@@ -22,18 +22,18 @@ function App() {
   const [caseData, setCaseData] = useState<CaseRecord | null>(null);
   const [attemptData, setAttemptData] = useState<AttemptRecord | null>(null);
 
-  const [caseRef, setCaseRef] = useState('agent-case-104');
-  const [reason, setReason] = useState('The previous request was rejected because the submitted evidence did not establish the required condition.');
-  const [seedEvidence, setSeedEvidence] = useState('Original evidence item A\nOriginal evidence item B');
+  const [caseRef, setCaseRef] = useState('');
+  const [reason, setReason] = useState('');
+  const [seedEvidence, setSeedEvidence] = useState('');
 
   const [caseId, setCaseId] = useState('');
-  const [requestText, setRequestText] = useState('Please reconsider this request with the evidence below.');
-  const [retryEvidence, setRetryEvidence] = useState('Original evidence item A\nOriginal evidence item B\nNew evidence item C');
+  const [requestText, setRequestText] = useState('');
+  const [retryEvidence, setRetryEvidence] = useState('');
 
-  const [freshDecision, setFreshDecision] = useState<'REJECTED'|'ACCEPTED'>('REJECTED');
-  const [freshReason, setFreshReason] = useState('Fresh upstream decision after reviewing the reopened case.');
-  const [freshEvidence, setFreshEvidence] = useState('Original evidence item A\nOriginal evidence item B\nNew evidence item C');
-  const [declineNote, setDeclineNote] = useState('The reopened evidence does not justify adopting a new upstream baseline.');
+  const [freshDecision, setFreshDecision] = useState<''|'REJECTED'|'ACCEPTED'>('');
+  const [freshReason, setFreshReason] = useState('');
+  const [freshEvidence, setFreshEvidence] = useState('');
+  const [declineNote, setDeclineNote] = useState('');
   const [attemptId, setAttemptId] = useState('');
   const [scanPhase, setScanPhase] = useState<ScanPhase>('idle');
   const [scanBaseline, setScanBaseline] = useState<string[]>([]);
@@ -131,6 +131,7 @@ function App() {
   async function resolve() {
     try {
       if (!caseId) throw new Error('Enter a case ID first.');
+      if (!freshDecision) throw new Error('Choose a fresh decision first.');
       await withWrite('record_fresh_decision', [caseId, freshDecision, freshReason, linesToJson(freshEvidence)]);
       const c = await readJson<CaseRecord>(contractAddress as `0x${string}`, 'get_case', [caseId]);
       const expectedStatus = freshDecision === 'ACCEPTED' ? 'CLOSED_ACCEPTED' : 'LOCKED_REJECTED';
@@ -237,7 +238,7 @@ function App() {
       <NavButton active={page==='retry'} icon="➤" label="Submit Retry" onClick={openRetryPage} />
       <NavButton active={page==='resolve'} icon="◇" label="Resolve" onClick={() => setPage('resolve')} />
       <NavButton active={page==='inspect'} icon="⌕" label="Inspect Cases" onClick={() => setPage('inspect')} />
-      <NavButton active={page==='evidence'} icon="</>" label="Runtime Proof" onClick={() => setPage('evidence')} />
+      <NavButton active={page==='evidence'} icon="</>" label="Verification" onClick={() => setPage('evidence')} />
       <div className="sidebarSpacer" />
       <div className="helpCard">
         <b>Need help?</b>
@@ -263,9 +264,9 @@ function App() {
         aside={<SideState caseData={caseData} attemptData={attemptData} account={account} />}
       >
         <StepHint number="1" title="Connect the authority wallet" body="The connected wallet will own the decision lifecycle for this case reference." done={!!account}/>
-        <Field label="Case reference" hint="Use a short unique ID for this case."><input value={caseRef} onChange={e=>setCaseRef(e.target.value)}/></Field>
-        <Field label="Recorded rejection reason" hint="What was the original decision and why?"><textarea value={reason} onChange={e=>setReason(e.target.value)}/></Field>
-        <Field label="Baseline evidence" hint="One evidence item per line."><textarea className="tall" value={seedEvidence} onChange={e=>setSeedEvidence(e.target.value)}/></Field>
+        <Field label="Case reference" hint="Use a short unique ID for this case."><input value={caseRef} onChange={e=>setCaseRef(e.target.value)} placeholder="Enter a unique case reference"/></Field>
+        <Field label="Recorded rejection reason" hint="What was the original decision and why?"><textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="Describe the recorded rejection and rationale"/></Field>
+        <Field label="Baseline evidence" hint="One evidence item per line."><textarea className="tall" value={seedEvidence} onChange={e=>setSeedEvidence(e.target.value)} placeholder="Enter the original evidence, one item per line"/></Field>
         <button className="primaryButton" disabled={busy || !account} onClick={seed}>Seed rejected case</button>
         <p className="actionNote">🔒 This action is recorded on-chain and becomes the baseline for future retries.</p>
       </PageLayout>}
@@ -275,9 +276,9 @@ function App() {
         subtitle="Use the full candidate evidence set. Rewording alone never creates a fresh semantic adjudication."
         aside={<SideState caseData={caseData} attemptData={attemptData} account={account} />}
       >
-        <CaseLoader caseId={caseId} setCaseId={(value) => { setCaseId(value); if (value !== caseData?.case_id) { setCaseData(null); setAttemptData(null); setScanPhase('idle'); setScanBaseline([]); setScanCandidate([]); setScanResult(null); } }} busy={busy} onLoad={() => { setScanPhase('idle'); setScanResult(null); void inspect(caseId, '', true); }}/>
-        <Field label="Reworded request" hint="Stored for audit only. This text does not enter the semantic gate."><textarea disabled={retryFormLocked} value={requestText} onChange={e=>setRequestText(e.target.value)}/></Field>
-        <Field label={retryClosed ? "Final baseline evidence" : "Full candidate evidence"} hint={retryClosed ? "Final accepted baseline loaded from finalized contract state." : retryReady ? "Current baseline is prefilled. Append only genuinely new evidence; do not remove baseline items." : "Load a rejected case to prefill its complete baseline evidence."}><textarea className="tall" disabled={retryFormLocked} value={loadedCaseMatches && retryFormLocked ? caseData?.baseline_evidence.join('\n') || '' : retryEvidence} onChange={e=>setRetryEvidence(e.target.value)}/></Field>
+        <CaseLoader caseId={caseId} setCaseId={(value) => { setCaseId(value); if (value !== caseData?.case_id) { setCaseData(null); setAttemptData(null); setRetryEvidence(''); setScanPhase('idle'); setScanBaseline([]); setScanCandidate([]); setScanResult(null); } }} busy={busy} onLoad={() => { setScanPhase('idle'); setScanResult(null); void inspect(caseId, '', true); }}/>
+        <Field label="Reworded request" hint="Stored for audit only. This text does not enter the semantic gate."><textarea disabled={retryFormLocked} value={requestText} onChange={e=>setRequestText(e.target.value)} placeholder="Describe the retry request"/></Field>
+        <Field label={retryClosed ? "Final baseline evidence" : "Full candidate evidence"} hint={retryClosed ? "Final accepted baseline loaded from finalized contract state." : retryReady ? "Current baseline is loaded from finalized state. Append only genuinely new evidence; do not remove baseline items." : "Load a rejected case to load its complete baseline evidence."}><textarea className="tall" disabled={retryFormLocked} value={loadedCaseMatches && retryFormLocked ? caseData?.baseline_evidence.join('\n') || '' : retryEvidence} onChange={e=>setRetryEvidence(e.target.value)} placeholder={retryReady ? "Append genuinely new evidence below the loaded baseline" : "Load a rejected case first"}/></Field>
         <SemanticBoundaryScan
           phase={scanPhase}
           requestText={requestText}
@@ -310,11 +311,11 @@ function App() {
             <button className={freshDecision==='REJECTED' ? 'decisionCard selected' : 'decisionCard'} onClick={()=>setFreshDecision('REJECTED')}><b>REJECTED</b><span>Adopt the reopened evidence as the new rejection baseline.</span></button>
             <button className={freshDecision==='ACCEPTED' ? 'decisionCard selected accept' : 'decisionCard'} onClick={()=>setFreshDecision('ACCEPTED')}><b>ACCEPTED</b><span>Close the case. Future retries are not allowed.</span></button>
           </div>
-          <Field label="Decision reason"><textarea value={freshReason} onChange={e=>setFreshReason(e.target.value)}/></Field>
-          <Field label="Evidence reviewed" hint="Prefilled from the pending MATERIAL_DELTA attempt and must match it exactly."><textarea className="tall" value={freshEvidence} onChange={e=>setFreshEvidence(e.target.value)}/></Field>
-          <button className="primaryButton" disabled={busy || !isAuthority} onClick={resolve}>Record fresh {freshDecision.toLowerCase()} decision</button>
+          <Field label="Decision reason"><textarea value={freshReason} onChange={e=>setFreshReason(e.target.value)} placeholder="Describe the fresh decision and rationale"/></Field>
+          <Field label="Evidence reviewed" hint="Loaded from the pending MATERIAL_DELTA attempt and must match it exactly."><textarea className="tall" value={freshEvidence} onChange={e=>setFreshEvidence(e.target.value)} placeholder="Pending candidate evidence will load from finalized state"/></Field>
+          <button className="primaryButton" disabled={busy || !isAuthority || !freshDecision} onClick={resolve}>{freshDecision ? `Record fresh ${freshDecision.toLowerCase()} decision` : 'Choose a fresh decision'}</button>
           <div className="divider"><span>or keep the prior baseline</span></div>
-          <Field label="Decline note"><textarea value={declineNote} onChange={e=>setDeclineNote(e.target.value)}/></Field>
+          <Field label="Decline note"><textarea value={declineNote} onChange={e=>setDeclineNote(e.target.value)} placeholder="Explain why reopening is declined"/></Field>
           <button className="secondaryButton" disabled={busy || !isAuthority} onClick={decline}>Decline reopening</button>
           {!isAuthority && <div className="warningBox">Connect this case's decision-authority wallet to record or decline the fresh decision.</div>}
         </> : <div className="detailCard">
@@ -384,10 +385,10 @@ function Overview({contractAddress, validAddress, explorerUrl, onOpenSeed, onOpe
         <div className="outcomeList"><span>IMMATERIAL_DELTA</span><span className="material">MATERIAL_DELTA</span></div>
       </div>
       <div className="card infoCard runtimeQuick">
-        <span className="sectionEyebrow">Runtime proof</span>
+        <span className="sectionEyebrow">Verification</span>
         <h3>Verified on StudioNet.</h3>
         <p>The final deployment exercised replay blocking, evidence binding, epoch reset, terminal acceptance, and authority-role guards.</p>
-        <button className="textButton" onClick={onRuntimeCase}>Open verified demo case →</button>
+        <button className="textButton" onClick={onRuntimeCase}>Inspect verified runtime case →</button>
       </div>
     </section>
   </>
@@ -432,7 +433,7 @@ function RuntimeEvidence({onRuntimeCase,onRoleCase}:{onRuntimeCase:()=>void;onRo
     ['Authority guard', 'Decision authority retry → AUTHORITY_CANNOT_SUBMIT_RETRY before attempt/model call.'],
   ];
   return <>
-    <div className="pageHeading"><div><span className="kicker">STUDIONET PROOF</span><h1>Runtime evidence</h1><p>Behavioral proof from the final deployment. These are executed contract outcomes, not source-marker assertions.</p></div></div>
+    <div className="pageHeading"><div><span className="kicker">STUDIONET VERIFICATION</span><h1>Protocol verification</h1><p>Behavioral evidence from the final deployment. These are executed contract outcomes, not source-marker assertions.</p></div></div>
     <div className="evidenceGrid">
       <section className="card evidenceList">{gates.map(([title,body])=><div className="evidenceRow" key={title}><span className="checkIcon">✓</span><div><b>{title}</b><p>{body}</p></div></div>)}</section>
       <aside className="sideColumn">
