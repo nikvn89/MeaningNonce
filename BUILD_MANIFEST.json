@@ -43,7 +43,7 @@
     "FINAL_SUMMARY.md": "28201b43306939dc42049feb0da6872908219ec6d423a283bf0a9b128759d0c4",
     "LOCKED_SPEC.md": "ab23526ffe7830182138545f79df07cefd831b241e4f2691aa312bf969d26e5f",
     "README.md": "b21463c72a8f61b1d1ad56098bbad61f49a068483752a64825742af0d04460b3",
-    "TESTING.md": "4dd97b608c61bf0d8b22309a430e6223d609670ce41260b9c3dca62e85c1e3c2",
+    "TESTING.md": "67c825a0c2faa6229719c833ccdfd655d7bfc0a0c53988f81c5bc40b4ad0c51f",
     "contracts/MeaningNonce.py": "d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f",
     "index.html": "ce36a35dd94d953cafe5d6275279a8c5cab225fb5e8f1747c435ef0308b41bbe",
     "package.json": "188ee0ee18ba05d9637429317c9baf3f23b6e16d09c0e8c076de1a6b686619cc",
@@ -78,7 +78,14 @@
     "tsconfig.app.json": "0785cf2868408f08a5ccee2a52a89fe8b3fe3e2b7a28c4370bf213cb274eb872",
     "tsconfig.json": "67312658d22f72e4310e3c1410ea5862b1489055bbd9d70107f3f3cbbb86bdf8",
     "tsconfig.node.json": "992e6fe8a58d16d79389ecdc94a55d2a0ce649245fba3a6d20946b6200cd26e0",
-    "vite.config.ts": "0ea84b4e2909b04e4c1cb1b92392a9f85bcb46605472763b15935d3498ba8ed3"
+    "vite.config.ts": "0ea84b4e2909b04e4c1cb1b92392a9f85bcb46605472763b15935d3498ba8ed3",
+    "runtime-evidence/dapp-screenshots/01_baseline_LOCKED_REJECTED.png": "208d57c44bc22ce3f7e52ea40f7d61dca42448147f137ca8f2999d6c77884dfe",
+    "runtime-evidence/dapp-screenshots/02_EXACT_REPLAY_model_false.png": "6fc05b01782d977312efb6122a2204475feea71b4fe0ba44554fc45957f84bc3",
+    "runtime-evidence/dapp-screenshots/03_IMMATERIAL_DELTA_model_true.png": "1bbc01fdfdd8bd42491cb61f1e8b15ccb0c174774d15475b5936f78ae70134f1",
+    "runtime-evidence/dapp-screenshots/04_ALREADY_ADJUDICATED_model_false.png": "c9b52335617f0a32f90db2e9b5128de0f973beabcbdc48594c491a2fc401c758",
+    "runtime-evidence/dapp-screenshots/05_MATERIAL_DELTA_AWAITING_FRESH_DECISION.png": "c4e55cad78d5305abdbf194dec33e9100e0bc45386fa9ecb07bdf39ebdfc681e",
+    "runtime-evidence/dapp-screenshots/06_Authority_ACCEPTED_bound_evidence.png": "d475a7078e9e4b0494007a4a5d41a3c2ca1300d880f65e8fd153e5d452ebe5ad",
+    "runtime-evidence/dapp-screenshots/07_FINAL_CLOSED_ACCEPTED.png": "0b476f3c03a2010ca9d72b6915993cb15c637a87045cc3621c125495c794c799"
   },
   "public_submission_hygiene": "PASS",
   "documented_bounds": {
@@ -86,5 +93,19 @@
     "baseline_saturation_terminal": "LOCKED_SPEC #24 - a MAX_EVIDENCE_ITEMS baseline refuses every future retry; test_liveness_bounds.py",
     "recovery": "LOCKED_SPEC #23 - authority re-seeds under a new case_ref; test_recovery_probe.py",
     "attempt_storage_unbounded": "LOCKED_SPEC #25"
+  },
+  "live_dapp_runtime_evidence": {
+    "status": "PASS",
+    "source": "production dApp against frozen StudioNet deployment",
+    "directory": "runtime-evidence/dapp-screenshots/",
+    "checkpoints": [
+      "LOCKED_REJECTED baseline",
+      "EXACT_REPLAY model_called=false",
+      "IMMATERIAL_DELTA model_called=true",
+      "ALREADY_ADJUDICATED model_called=false",
+      "MATERIAL_DELTA -> AWAITING_FRESH_DECISION",
+      "authority ACCEPTED with bound evidence",
+      "CLOSED_ACCEPTED; 4 attempts; 2/3 semantic model calls"
+    ]
   }
 }

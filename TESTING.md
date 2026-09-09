@@ -95,7 +95,7 @@ AST-only pass and is the one that gates on source alone.
 sha256sum -c FINAL_CHECKSUMS.txt
 ```
 
-Every tracked file, 46 of 46, including `contracts/MeaningNonce.py` at the frozen
+Every tracked file, 53 of 53, including `contracts/MeaningNonce.py` at the frozen
 SHA. A mismatch anywhere means the package is not the reviewed one.
 
 ## C. Deployed-source parity — PASS
@@ -157,6 +157,36 @@ Expected submission-facing behavior:
 7. The Semantic Boundary Scan is UI-only explanatory motion: it does not reveal a verdict until the finalized attempt is read back after the write.
 
 A dependency-installed local `npm run build` is not claimed as reproduced in the packaging environment where package installation was unavailable.
+
+
+### E2. Live dApp runtime evidence
+
+A complete reviewer-facing runtime walkthrough was executed through the production
+dApp at `https://meaning-nonce.vercel.app` against the frozen StudioNet deployment.
+These screenshots complement the deeper StudioNet evidence in `runtime-evidence/screenshots/`;
+they do not replace the rollback, role-guard, or source-parity proofs recorded there.
+
+Captured checkpoints:
+
+1. `LOCKED_REJECTED` baseline with zero attempts and zero semantic model calls.
+2. `EXACT_REPLAY` with `model_called=false`.
+3. `IMMATERIAL_DELTA` with `model_called=true`.
+4. `ALREADY_ADJUDICATED` with `model_called=false`; the semantic-call counter does not increase.
+5. `MATERIAL_DELTA` -> `AWAITING_FRESH_DECISION`, with two semantic model calls used in the epoch.
+6. The decision authority loads the bound candidate evidence and records fresh `ACCEPTED`.
+7. Final `CLOSED_ACCEPTED` state with 4 attempts and 2/3 semantic model calls.
+
+Reviewer-facing screenshots:
+
+```text
+runtime-evidence/dapp-screenshots/01_baseline_LOCKED_REJECTED.png
+runtime-evidence/dapp-screenshots/02_EXACT_REPLAY_model_false.png
+runtime-evidence/dapp-screenshots/03_IMMATERIAL_DELTA_model_true.png
+runtime-evidence/dapp-screenshots/04_ALREADY_ADJUDICATED_model_false.png
+runtime-evidence/dapp-screenshots/05_MATERIAL_DELTA_AWAITING_FRESH_DECISION.png
+runtime-evidence/dapp-screenshots/06_Authority_ACCEPTED_bound_evidence.png
+runtime-evidence/dapp-screenshots/07_FINAL_CLOSED_ACCEPTED.png
+```
 
 ## F. Security review checklist
 
