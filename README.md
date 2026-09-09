@@ -40,7 +40,11 @@ Deterministic code can canonicalize evidence, detect exact replay/removal, remem
 
 The wallet that seeds a case is only the **contract-local decision authority** for that `(authority, case_ref)` namespace. MeaningNonce does not prove that the wallet is a canonical external-world institution, does not prove supplied evidence is true, and does not claim provenance merely because data is immutable. Evidence strings remain assertions supplied to the contract.
 
-MeaningNonce also does not claim perfect semantic deduplication. A paraphrased evidence item can hash differently and consume a bounded semantic slot; a third party can consume a budget window before a legitimate requester, with authority budget restoration as the explicit recovery path.
+MeaningNonce also does not claim perfect semantic deduplication. A paraphrased evidence item can hash differently and consume a bounded semantic slot, and a third party can consume a budget window before a legitimate requester.
+
+Authority budget restoration is the recovery path, and it has a floor worth stating plainly. Grants are capped at five per epoch, and the epoch counter resets in exactly one place — a fresh `REJECTED` decision, which requires a pending `MATERIAL_DELTA`, which requires a semantic call. So the reset that restores the budget sits behind the budget it would restore: eighteen spam retries from any wallet drive a `case_id` to a state where **nobody, authority included, can reopen it again**. The same terminal state is reachable a second way, because the baseline only ever grows and a retry must carry all of it — a baseline holding `MAX_EVIDENCE_ITEMS` items refuses every possible future retry in canonicalisation.
+
+Neither is a lost decision. Case identity is `authority + case_ref`, so the authority re-seeds the same rejection under a new reference and retries resume; it is a griefing tax per reference, not permanent denial, and it is not a laundering route, because re-seeding is authority-only and the authority is the party the lock protects. Both bounds and the recovery path ship as executable tests: `tests/direct/test_liveness_bounds.py` and `tests/direct/test_recovery_probe.py`.
 
 ## Runtime result
 
@@ -84,7 +88,15 @@ caught mutations: 17/17
 PASS Python compile
 ```
 
-The packaging environment did not have `genvm-linter` / `genlayer-test` installed and its package fetch timed out during `npm install`, so those exact-source gates are not relabelled as locally reproduced PASS. The production frontend is live on Vercel. Exact-source GenVM/Direct Mode commands remain documented in `TESTING.md` for reproducible execution in an environment with the pinned dependencies.
+In an environment with the pinned dependencies installed, the exact-source gates
+also pass: `genvm_linter.cli lint` exits 0 on three checks, and
+`pytest tests/direct/` runs 23 tests on a real GenVM build — the 19 behavioural
+and adversarial tests plus four that prove the project's own limits
+(`test_liveness_bounds.py`, `test_recovery_probe.py`). `tests/direct/conftest.py`
+pins the GenVM version so a clean machine executes the same runtime rather than
+resolving "latest".
+
+The original packaging environment had no `genvm-linter` / `genlayer-test` and its `npm install` timed out, which is why the two result blocks above are reported separately rather than merged: the first is what that environment executed, the second is what a machine with `requirements.txt` installed executes. Neither is a source-marker assertion. Exact commands are in `TESTING.md`.
 
 ## Frontend
 
@@ -94,7 +106,9 @@ The interface is organized as a Web3 protocol workspace with persistent navigati
 
 The Submit Retry page includes the signature **Semantic Boundary Scan**: wording visibly exits the decision boundary, the loaded baseline locks in place, candidate evidence is scanned, and the outcome is revealed only after the finalized attempt is read back from StudioNet. It is explanatory motion, not a simulated verdict.
 
-The client does not treat `FINALIZED` alone as successful execution. Where an execution enum is exposed it requires `FINISHED_WITH_RETURN`; otherwise each write verifies a method-specific finalized on-chain state postcondition before presenting success.
+The client does not treat `FINALIZED` alone as successful execution.
+
+In practice the postcondition is the whole check, and that is deliberate. `receipt.txExecutionResultName` is set only by `decodeTransaction` in genlayer-js 1.1.8, while `waitForTransactionReceipt` routes a chain with `isStudio` through `decodeLocalnetTransaction`, which never sets it — so on StudioNet the enum is always absent and the branch that would read it never fires. Every write therefore verifies a method-specific finalized on-chain state postcondition instead: `seed` re-derives the case and checks its authority, `retry` requires exactly one new attempt bound to the connected requester, `resolve` requires the expected status and a cleared pending attempt, `grantBudget` requires the counters to have moved, and `decline` requires the prior locked state to be restored. Reading state back is stronger evidence than an enum would have been.
 
 Brand files are `public/logo.png` and `public/brand-lockup.png`; design rationale is documented in [`BRAND_ASSETS.md`](./BRAND_ASSETS.md).
 
@@ -105,5 +119,5 @@ Brand files are `public/logo.png` and `public/brand-lockup.png`; design rational
 - `runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md` — StudioNet behavior verification.
 - `runtime-evidence/RUNTIME_EVIDENCE.json` — machine-readable snapshots.
 - `scripts/test_contract_logic.py` — executable actual-source behavior tests.
-- `tests/direct/` — GenLayer Direct Mode tests.
+- `tests/direct/` — GenLayer Direct Mode tests, including `test_liveness_bounds.py` and `test_recovery_probe.py`, which execute the limitations named in the honest-scope section above.
 - `TESTING.md` — exact reproduction and verification path.

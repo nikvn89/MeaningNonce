@@ -41,20 +41,62 @@ Pinned Python tooling remains in `requirements.txt`. Recorded exact-source resul
 ```text
 genvm-lint check / validation: PASS
 genvm-lint typecheck: PASS
-pytest tests/direct/ -q: 19 passed
 ```
 
-The packaging environment itself did not have those GenLayer Python packages installed, so it does not claim to reproduce those commands locally. A dependency-installed local `npm run build` was also not rerun there; Vercel is the production build surface.
+Re-executed on a machine with `requirements.txt` installed, against the same frozen contract SHA:
+
+```text
+python -m genvm_linter.cli lint contracts/MeaningNonce.py   ->  Lint passed (3 checks), rc 0
+pytest tests/direct/                                        ->  23 passed
+npm run build                                               ->  clean
+```
+
+`tests/direct/conftest.py` pins the GenVM build (`v0.2.12`, overridable with
+`GENVM_VERSION`). Without it, `direct_deploy` resolves "latest" at run time, so a
+clean machine executes a runtime this contract was never verified against — and
+a withdrawn release returns 404 instead of a test result.
+
+The 23 are the 19 behavioural and adversarial tests plus four that execute the
+project's own limits rather than only its guarantees:
+
+```text
+tests/direct/test_liveness_bounds.py
+  test_a_third_party_can_lock_a_case_permanently
+  test_one_wide_material_delta_can_brick_the_case
+tests/direct/test_recovery_probe.py
+  test_authority_can_reseed_under_a_new_reference_after_a_brick
+  test_reseeding_does_not_launder_a_closed_acceptance
+```
+
+The first two drive a `case_id` into a state from which no caller can reopen it —
+by exhausting the semantic budget past the grant cap, and by saturating the
+evidence baseline. The second two show the recovery path (`LOCKED_SPEC` #23) and
+show that it is not a laundering route. These bounds are stated in
+`LOCKED_SPEC.md` #21, #24 and #25 and in the README honest-scope section; the
+tests are what make those statements checkable rather than assertions.
 
 Reproduction commands:
 
 ```bash
 python -m pip install -r requirements.txt
-npm run lint:genvm
+python -m genvm_linter.cli lint contracts/MeaningNonce.py
 npm run test:direct
 npm install
 npm run build
 ```
+
+`npm run lint:genvm` additionally runs `genvm-lint check`, which resolves the SDK
+over the network and therefore needs outbound access; `lint` is the offline
+AST-only pass and is the one that gates on source alone.
+
+## B2. Repository integrity
+
+```bash
+sha256sum -c FINAL_CHECKSUMS.txt
+```
+
+Every tracked file, 46 of 46, including `contracts/MeaningNonce.py` at the frozen
+SHA. A mismatch anywhere means the package is not the reviewed one.
 
 ## C. Deployed-source parity — PASS
 

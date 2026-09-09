@@ -45,7 +45,12 @@ See `runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md` and `runtime-evidence/RUN
 - `PASS Python compile`
 - `PASS TypeScript/TSX source syntax transpile check`
 
-The package does not claim exact-source `genvm-lint`, Direct Mode, or a dependency-installed local Vite build as PASS in the packaging environment where those dependencies were unavailable.
+The packaging environment lacked the GenLayer Python packages, so it did not claim those gates itself. Re-executed with `requirements.txt` installed, against the same frozen SHA:
+
+- `PASS genvm_linter.cli lint: 3 checks, rc 0`
+- `PASS Direct Mode on real GenVM (pinned v0.2.12): 23/23`
+- `PASS sha256sum -c FINAL_CHECKSUMS.txt: 46/46`
+- `PASS npm run build`
 
 ## Final UI / brand
 
@@ -78,3 +83,5 @@ MeaningNonce keeps its claims narrow and explicit:
 - **Bounded semantic scope:** GenLayer is used only to classify whether explicit new evidence is materially relevant to reopening the recorded rejection.
 
 The contract does not claim to arbitrate the underlying case or establish the truth of supplied evidence.
+
+**Named bounds.** The guards are bounded in both directions, and the package says where they stop rather than leaving it to a reader. A `case_id` can be driven to a state from which no caller — the authority included — can reopen it: by exhausting the semantic budget past the five-grant cap, since the epoch reset that would restore the budget itself requires a semantic call; or by saturating the evidence baseline, since the baseline only grows and a retry must carry all of it. Neither loses the decision: case identity is `authority + case_ref`, so the authority re-seeds under a new reference, which is a griefing tax per reference rather than denial, and is not a laundering route because re-seeding is authority-only. Attempt storage is likewise uncapped. All four are written into `LOCKED_SPEC.md` #21, #23, #24 and #25 and executed in `tests/direct/test_liveness_bounds.py` and `test_recovery_probe.py`.

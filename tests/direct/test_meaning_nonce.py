@@ -1,5 +1,7 @@
 import json
 
+from conftest import CONTRACT, GENVM_VERSION
+
 
 def evidence(items):
     return json.dumps(items)
@@ -18,7 +20,7 @@ def seed(contract, direct_vm, authority):
 
 
 def test_exact_replay_and_rewording_skip_model(direct_vm, direct_deploy, direct_alice, direct_bob):
-    contract = direct_deploy("contracts/MeaningNonce.py")
+    contract = direct_deploy(CONTRACT, sdk_version=GENVM_VERSION)
     case_id = seed(contract, direct_vm, direct_alice)
 
     direct_vm.sender = direct_bob
@@ -37,7 +39,7 @@ def test_exact_replay_and_rewording_skip_model(direct_vm, direct_deploy, direct_
 
 
 def test_removal_is_blocked_before_model(direct_vm, direct_deploy, direct_alice, direct_bob):
-    contract = direct_deploy("contracts/MeaningNonce.py")
+    contract = direct_deploy(CONTRACT, sdk_version=GENVM_VERSION)
     case_id = seed(contract, direct_vm, direct_alice)
     direct_vm.sender = direct_bob
     attempt_id = contract.submit_retry(
@@ -51,7 +53,7 @@ def test_removal_is_blocked_before_model(direct_vm, direct_deploy, direct_alice,
 
 
 def test_material_delta_reopens_and_validator_matches(direct_vm, direct_deploy, direct_alice, direct_bob):
-    contract = direct_deploy("contracts/MeaningNonce.py")
+    contract = direct_deploy(CONTRACT, sdk_version=GENVM_VERSION)
     case_id = seed(contract, direct_vm, direct_alice)
     direct_vm.clear_mocks()
     direct_vm.mock_llm(r".*anti-verdict-shopping gate.*", json.dumps({"decision": "MATERIAL_DELTA"}))
@@ -73,7 +75,7 @@ def test_material_delta_reopens_and_validator_matches(direct_vm, direct_deploy, 
 
 
 def test_immaterial_delta_stays_locked(direct_vm, direct_deploy, direct_alice, direct_bob):
-    contract = direct_deploy("contracts/MeaningNonce.py")
+    contract = direct_deploy(CONTRACT, sdk_version=GENVM_VERSION)
     case_id = seed(contract, direct_vm, direct_alice)
     direct_vm.clear_mocks()
     direct_vm.mock_llm(r".*anti-verdict-shopping gate.*", json.dumps({"decision": "IMMATERIAL_DELTA"}))
@@ -96,7 +98,7 @@ def test_immaterial_delta_stays_locked(direct_vm, direct_deploy, direct_alice, d
 
 
 def test_only_authority_can_record_fresh_decision(direct_vm, direct_deploy, direct_alice, direct_bob):
-    contract = direct_deploy("contracts/MeaningNonce.py")
+    contract = direct_deploy(CONTRACT, sdk_version=GENVM_VERSION)
     case_id = seed(contract, direct_vm, direct_alice)
     direct_vm.clear_mocks()
     direct_vm.mock_llm(r".*anti-verdict-shopping gate.*", json.dumps({"decision": "MATERIAL_DELTA"}))
@@ -113,7 +115,7 @@ def test_only_authority_can_record_fresh_decision(direct_vm, direct_deploy, dire
 
 
 def test_fresh_rejection_sets_full_new_baseline(direct_vm, direct_deploy, direct_alice, direct_bob, direct_charlie):
-    contract = direct_deploy("contracts/MeaningNonce.py")
+    contract = direct_deploy(CONTRACT, sdk_version=GENVM_VERSION)
     case_id = seed(contract, direct_vm, direct_alice)
     direct_vm.clear_mocks()
     direct_vm.mock_llm(r".*anti-verdict-shopping gate.*", json.dumps({"decision": "MATERIAL_DELTA"}))
@@ -139,7 +141,7 @@ def test_fresh_rejection_sets_full_new_baseline(direct_vm, direct_deploy, direct
 
 
 def test_fresh_acceptance_closes_case(direct_vm, direct_deploy, direct_alice, direct_bob):
-    contract = direct_deploy("contracts/MeaningNonce.py")
+    contract = direct_deploy(CONTRACT, sdk_version=GENVM_VERSION)
     case_id = seed(contract, direct_vm, direct_alice)
     direct_vm.clear_mocks()
     direct_vm.mock_llm(r".*anti-verdict-shopping gate.*", json.dumps({"decision": "MATERIAL_DELTA"}))
@@ -161,7 +163,7 @@ def test_fresh_acceptance_closes_case(direct_vm, direct_deploy, direct_alice, di
 
 
 def test_identical_immaterial_candidate_is_adjudicated_once(direct_vm, direct_deploy, direct_alice, direct_bob):
-    contract = direct_deploy("contracts/MeaningNonce.py")
+    contract = direct_deploy(CONTRACT, sdk_version=GENVM_VERSION)
     case_id = seed(contract, direct_vm, direct_alice)
     direct_vm.clear_mocks()
     direct_vm.mock_llm(r".*anti-verdict-shopping gate.*", json.dumps({"decision": "IMMATERIAL_DELTA"}))
@@ -183,7 +185,7 @@ def test_identical_immaterial_candidate_is_adjudicated_once(direct_vm, direct_de
 
 
 def test_epoch_model_budget_and_authority_grant(direct_vm, direct_deploy, direct_alice, direct_bob):
-    contract = direct_deploy("contracts/MeaningNonce.py")
+    contract = direct_deploy(CONTRACT, sdk_version=GENVM_VERSION)
     case_id = seed(contract, direct_vm, direct_alice)
     direct_vm.clear_mocks()
     direct_vm.mock_llm(r".*anti-verdict-shopping gate.*", json.dumps({"decision": "IMMATERIAL_DELTA"}))
@@ -223,7 +225,7 @@ def test_epoch_model_budget_and_authority_grant(direct_vm, direct_deploy, direct
 
 
 def test_authority_can_decline_reopening_without_changing_baseline(direct_vm, direct_deploy, direct_alice, direct_bob):
-    contract = direct_deploy("contracts/MeaningNonce.py")
+    contract = direct_deploy(CONTRACT, sdk_version=GENVM_VERSION)
     case_id = seed(contract, direct_vm, direct_alice)
     direct_vm.clear_mocks()
     direct_vm.mock_llm(r".*anti-verdict-shopping gate.*", json.dumps({"decision": "MATERIAL_DELTA"}))
@@ -254,7 +256,7 @@ def test_authority_can_decline_reopening_without_changing_baseline(direct_vm, di
 
 
 def test_malformed_model_decision_fails_closed(direct_vm, direct_deploy, direct_alice, direct_bob):
-    contract = direct_deploy("contracts/MeaningNonce.py")
+    contract = direct_deploy(CONTRACT, sdk_version=GENVM_VERSION)
     case_id = seed(contract, direct_vm, direct_alice)
     direct_vm.clear_mocks()
     direct_vm.mock_llm(r".*anti-verdict-shopping gate.*", json.dumps({"decision": "MAYBE"}))
@@ -274,7 +276,7 @@ def test_malformed_model_decision_fails_closed(direct_vm, direct_deploy, direct_
 
 
 def test_authority_cannot_submit_retry_against_own_case(direct_vm, direct_deploy, direct_alice):
-    contract = direct_deploy("contracts/MeaningNonce.py")
+    contract = direct_deploy(CONTRACT, sdk_version=GENVM_VERSION)
     case_id = seed(contract, direct_vm, direct_alice)
     direct_vm.sender = direct_alice
     with direct_vm.expect_revert("AUTHORITY_CANNOT_SUBMIT_RETRY"):

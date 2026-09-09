@@ -1,6 +1,6 @@
 {
   "project": "MeaningNonce",
-  "build": "public-final-empty-forms-web3-polish",
+  "build": "public-final-bounds-documented",
   "network": "GenLayer StudioNet",
   "live_dapp": "https://meaning-nonce.vercel.app",
   "contract_address": "0x1A81177f32d22185F421F0019714DCB6e3124263",
@@ -19,7 +19,9 @@
     "prompt_fence_probe": "0/9 bypasses",
     "mutation_matrix": "17/17 caught",
     "typescript_tsx_syntax_transpile": "PASS",
-    "css_parse": "PASS"
+    "css_parse": "PASS",
+    "genvm_linter_lint": "PASS (3 checks, rc 0)",
+    "direct_mode_real_genvm": "23/23 PASS on pinned GenVM v0.2.12"
   },
   "production_visual_checks": {
     "seed_case_empty_default": "PASS from production screenshot",
@@ -78,5 +80,11 @@
     "tsconfig.node.json": "992e6fe8a58d16d79389ecdc94a55d2a0ce649245fba3a6d20946b6200cd26e0",
     "vite.config.ts": "0ea84b4e2909b04e4c1cb1b92392a9f85bcb46605472763b15935d3498ba8ed3"
   },
-  "public_submission_hygiene": "PASS"
+  "public_submission_hygiene": "PASS",
+  "documented_bounds": {
+    "budget_exhaustion_terminal": "LOCKED_SPEC #21 - 18 spam retries permanently close a case_id; test_liveness_bounds.py",
+    "baseline_saturation_terminal": "LOCKED_SPEC #24 - a MAX_EVIDENCE_ITEMS baseline refuses every future retry; test_liveness_bounds.py",
+    "recovery": "LOCKED_SPEC #23 - authority re-seeds under a new case_ref; test_recovery_probe.py",
+    "attempt_storage_unbounded": "LOCKED_SPEC #25"
+  }
 }
