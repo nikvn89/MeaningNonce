@@ -1,26 +1,44 @@
 #!/usr/bin/env bash
+# Source/deployment parity for the Studio Next deployment.
+#
+# Compares the source the network actually holds against contracts/MeaningNonce.py.
+# Newline-aware: the Studio editor may store CRLF, which changes the raw hash
+# without changing a single character of source.
+#
+#   bash scripts/verify_deployed_source.sh
+#   bash scripts/verify_deployed_source.sh 0xOTHERADDRESS
 set -euo pipefail
 
-RPC='https://studio.genlayer.com/api'
-ADDR='0x1A81177f32d22185F421F0019714DCB6e3124263'
-EXPECTED_LF='d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f'
-EXPECTED_CRLF='b550a8a2afe70b94151e86243fd92912e5f91d31dd82b59e621cb01685c3baab'
+RPC="${GENLAYER_RPC:-https://studio-next.genlayer.com/api}"
+ADDR="${1:-0x8CB652d2a1d3E01DdD4eD1515F2c3F665c7D10b4}"
+SRC="${CONTRACT_PATH:-contracts/MeaningNonce.py}"
+
+if [ ! -f "$SRC" ]; then
+  echo "Contract source not found: $SRC" >&2
+  exit 2
+fi
+
+EXPECTED_LF="$(python3 -c "
+import hashlib,sys
+data = open(sys.argv[1],'rb').read().replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+print(hashlib.sha256(data).hexdigest())
+" "$SRC")"
+
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
 
 post() {
-  local payload="$1"
-  curl -fsS -X POST "$RPC" -H 'Content-Type: application/json' -d "$payload" > "$TMP"
+  curl -fsS -X POST "$RPC" -H 'Content-Type: application/json' -d "$1" > "$TMP"
 }
 
 ok_result() {
   python3 - "$TMP" <<'PY'
-import json,sys
+import json, sys
 try:
-    o=json.load(open(sys.argv[1],encoding='utf-8'))
+    obj = json.load(open(sys.argv[1], encoding='utf-8'))
 except Exception:
     raise SystemExit(1)
-if o.get('error') or o.get('result') in (None, '', {}):
+if obj.get('error') or obj.get('result') in (None, '', {}):
     raise SystemExit(1)
 raise SystemExit(0)
 PY
@@ -29,18 +47,20 @@ PY
 echo "MeaningNonce deployed-source parity check (newline-aware)"
 echo "RPC:      $RPC"
 echo "Contract: $ADDR"
+echo "Source:   $SRC"
+echo "Expected normalized SHA256: $EXPECTED_LF"
 echo
 
-PAYLOAD1="{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"gen_getContractCode\",\"params\":[\"$ADDR\"]}"
-PAYLOAD2="{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"gen_getContractCode\",\"params\":[\"$ADDR\",\"finalized\"]}"
-PAYLOAD3="{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"gen_getContractCode\",\"params\":[{\"address\":\"$ADDR\",\"status\":\"finalized\"}]}"
+P1="{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"gen_getContractCode\",\"params\":[\"$ADDR\"]}"
+P2="{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"gen_getContractCode\",\"params\":[\"$ADDR\",\"finalized\"]}"
+P3="{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"gen_getContractCode\",\"params\":[{\"address\":\"$ADDR\",\"status\":\"finalized\"}]}"
 
-if post "$PAYLOAD1" && ok_result; then
-  MODE='legacy address-only'
-elif post "$PAYLOAD2" && ok_result; then
-  MODE='legacy address + finalized'
-elif post "$PAYLOAD3" && ok_result; then
-  MODE='documented request object'
+if post "$P1" && ok_result; then
+  MODE='address-only'
+elif post "$P2" && ok_result; then
+  MODE='address + finalized'
+elif post "$P3" && ok_result; then
+  MODE='request object'
 else
   echo 'RPC did not return contract code.'
   cat "$TMP"; echo
@@ -48,48 +68,57 @@ else
 fi
 
 echo "RPC request mode: $MODE"
+echo
 
-python3 - "$TMP" "$EXPECTED_LF" "$EXPECTED_CRLF" <<'PY'
+python3 - "$TMP" "$EXPECTED_LF" <<'PY'
 import base64, hashlib, json, sys
-path, expected_lf, expected_crlf = sys.argv[1:]
+
+path, expected_lf = sys.argv[1:]
 obj = json.load(open(path, 'r', encoding='utf-8'))
 if obj.get('error'):
     raise SystemExit(f"RPC error: {obj['error']}")
-r = obj.get('result')
-if isinstance(r, dict):
-    for k in ('code','source','contractCode'):
-        if r.get(k):
-            r = r[k]
-            break
-if not isinstance(r, str) or not r:
-    raise SystemExit(f'Unexpected RPC result: {r!r}')
 
-if r.startswith('0x'):
-    b = bytes.fromhex(r[2:])
+result = obj.get('result')
+if isinstance(result, dict):
+    for key in ('code', 'source', 'contractCode'):
+        if result.get(key):
+            result = result[key]
+            break
+if not isinstance(result, str) or not result:
+    raise SystemExit(f'Unexpected RPC result: {result!r}')
+
+if result.startswith('0x'):
+    raw_bytes = bytes.fromhex(result[2:])
 else:
     try:
-        b = base64.b64decode(r, validate=True)
-        if not b:
+        raw_bytes = base64.b64decode(result, validate=True)
+        if not raw_bytes:
             raise ValueError('empty payload')
     except Exception:
-        b = r.encode('utf-8')
+        raw_bytes = result.encode('utf-8')
 
-raw = hashlib.sha256(b).hexdigest()
-normalized = b.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
-norm = hashlib.sha256(normalized).hexdigest()
+normalized = raw_bytes.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+raw_hash = hashlib.sha256(raw_bytes).hexdigest()
+norm_hash = hashlib.sha256(normalized).hexdigest()
 
-print('Deployed bytes:            ', len(b))
-print('Raw deployed SHA256:       ', raw)
-print('Expected CRLF SHA256:      ', expected_crlf)
+print('Deployed bytes:            ', len(raw_bytes))
+print('Raw deployed SHA256:       ', raw_hash)
 print('Normalized deployed bytes: ', len(normalized))
-print('Normalized deployed SHA256:', norm)
+print('Normalized deployed SHA256:', norm_hash)
 print('Expected LF source SHA256: ', expected_lf)
 print()
 
-if raw == expected_crlf and norm == expected_lf:
-    print('SOURCE PARITY PROVEN — exact source text; deployed copy uses CRLF line endings.')
-elif norm == expected_lf:
-    print('SOURCE PARITY PROVEN — source matches after newline normalization.')
-else:
+first_line = normalized.split(b'\n', 1)[0].decode('utf-8', 'replace').strip()
+print('Deployed first line:', first_line)
+if not first_line.startswith('# v0.3'):
+    print('WARNING: deployed source does not carry the v0.3 version comment.')
+print()
+
+if norm_hash != expected_lf:
     raise SystemExit('SOURCE PARITY MISMATCH — substantive source difference remains.')
+
+if raw_hash == expected_lf:
+    print('SOURCE PARITY PROVEN — byte-identical to the repository source.')
+else:
+    print('SOURCE PARITY PROVEN — identical after newline normalization (deployed copy uses CRLF).')
 PY
