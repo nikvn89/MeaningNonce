@@ -7,8 +7,15 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "check:ast": "python3 scripts/check_contract_ast.py",
+    "check:logic": "python3 scripts/test_contract_logic.py",
+    "check:adversarial": "python3 scripts/test_contract_logic.py --suite adversarial",
+    "check:fence": "python3 scripts/fence_probe.py contracts/MeaningNonce.py",
+    "check:mutations": "python3 scripts/mutation_matrix.py contracts/MeaningNonce.py",
     "gate:contract": "python3 scripts/gate_v03_runtime.py contracts/MeaningNonce.py",
-    "gate:schema": "python3 scripts/probe_v03_schema.py contracts/MeaningNonce.py"
+    "gate:schema": "python3 scripts/probe_v03_schema.py contracts/MeaningNonce.py",
+    "verify:deployed": "bash scripts/verify_deployed_source.sh",
+    "check": "npm run check:ast && npm run check:logic && npm run check:adversarial && npm run check:fence && npm run check:mutations && npm run build"
   },
   "dependencies": {
     "@genlayer/transaction-kit": "0.1.0-rc.2",

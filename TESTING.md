@@ -1,199 +1,146 @@
-# MeaningNonce — reviewer testing
+# Testing
 
-## Frozen deployment
+Contract under test: `contracts/MeaningNonce.py`, sha256
+`d561ae4588b1113c4c0224fb3c000e0947f5df6fc094651f7b5c77933a23fb6d`
+Deployment: `0x8CB652d2a1d3E01DdD4eD1515F2c3F665c7D10b4` on GenLayer Studio Next
+(chain 61997, GenVM v0.3.0-rc7).
 
-```text
-Network: GenLayer StudioNet
-Contract: 0x1A81177f32d22185F421F0019714DCB6e3124263
-Contract source SHA-256 (repo): d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f
-Main runtime case: fcbab56d34ba7520125cc205bf4b1ab392d20d5ac7b0827b32d7b63df5e6bc95
-Role-guard case: 6f1bc3dcd447849d1aeed5ce9021c6df989792bbf3d6ac9955f38c028023595f
-```
+Everything below is run against **that exact source file**, never a paraphrase or
+a second implementation of the same logic.
 
-## A. Local actual-source gates — PASS in packaging environment
+---
 
-```bash
-npm run check:contract
-npm run test:logic
-npm run test:adversarial
-npm run test:fence
-npm run test:mutations
-python -m py_compile contracts/MeaningNonce.py
-```
-
-Observed:
-
-```text
-PASS AST contract invariants
-PASS actual-contract off-chain logic: 15/15
-PASS executable adversarial actual-contract suite: 12/12
-PASS prompt-fence probe: 0/9 bypasses
-caught mutations: 17/17
-PASS Python compile
-```
-
-Evidence-strength rule: AST/grep/vector checks are **static only**. `test:logic` and `test:adversarial` execute the actual production contract source under a stub, but are still off-chain behavior rather than GenVM runtime execution.
-
-## B. Exact-source GenVM / Direct Mode path
-
-Pinned Python tooling remains in `requirements.txt`. Recorded exact-source results for the frozen contract SHA are:
-
-```text
-genvm-lint check / validation: PASS
-genvm-lint typecheck: PASS
-```
-
-Re-executed on a machine with `requirements.txt` installed, against the same frozen contract SHA:
-
-```text
-python -m genvm_linter.cli lint contracts/MeaningNonce.py   ->  Lint passed (3 checks), rc 0
-pytest tests/direct/                                        ->  23 passed
-npm run build                                               ->  clean
-```
-
-`tests/direct/conftest.py` pins the GenVM build (`v0.2.12`, overridable with
-`GENVM_VERSION`). Without it, `direct_deploy` resolves "latest" at run time, so a
-clean machine executes a runtime this contract was never verified against — and
-a withdrawn release returns 404 instead of a test result.
-
-The 23 are the 19 behavioural and adversarial tests plus four that execute the
-project's own limits rather than only its guarantees:
-
-```text
-tests/direct/test_liveness_bounds.py
-  test_a_third_party_can_lock_a_case_permanently
-  test_one_wide_material_delta_can_brick_the_case
-tests/direct/test_recovery_probe.py
-  test_authority_can_reseed_under_a_new_reference_after_a_brick
-  test_reseeding_does_not_launder_a_closed_acceptance
-```
-
-The first two drive a `case_id` into a state from which no caller can reopen it —
-by exhausting the semantic budget past the grant cap, and by saturating the
-evidence baseline. The second two show the recovery path (`LOCKED_SPEC` #23) and
-show that it is not a laundering route. These bounds are stated in
-`LOCKED_SPEC.md` #21, #24 and #25 and in the README honest-scope section; the
-tests are what make those statements checkable rather than assertions.
-
-Reproduction commands:
+## Offline gates
 
 ```bash
-python -m pip install -r requirements.txt
-python -m genvm_linter.cli lint contracts/MeaningNonce.py
-npm run test:direct
-npm install
-npm run build
+npm run check
 ```
 
-`npm run lint:genvm` additionally runs `genvm-lint check`, which resolves the SDK
-over the network and therefore needs outbound access; `lint` is the offline
-AST-only pass and is the one that gates on source alone.
+runs, in order, and stops at the first failure:
 
-## B2. Repository integrity
+| Gate | Command | Result |
+|---|---|---|
+| AST invariants | `npm run check:ast` | `PASS AST contract invariants` |
+| Contract logic | `npm run check:logic` | `15/15` |
+| Adversarial suite | `npm run check:adversarial` | `12/12` |
+| Prompt fence probe | `npm run check:fence` | `bypasses: 0/9` |
+| Mutation matrix | `npm run check:mutations` | `caught mutations: 17/17` |
+| Frontend build | `tsc -b && vite build` | rc 0 |
+
+### What each one is
+
+**`scripts/check_contract_ast.py`** — static invariants on the parsed contract:
+the request text never reaches the semantic prompt, the case id does not include
+the requester, the fence strip is a fixed point, the verdict enum has exactly two
+members.
+
+**`scripts/test_contract_logic.py`** — executes the real contract source against a
+minimal py-genlayer v0.3 stub (`gl.contract.Contract`, `gl.message.raw`,
+`gl.vm.run_nondet`, `genlayer.types` / `genlayer.storage` as real submodules).
+Storage fields are allocated by the stub base class, matching v0.3 semantics
+where a contract must not construct `TreeMap()` itself. 15 state-machine tests
+plus a 12-test adversarial suite (`--suite adversarial`) covering prompt-boundary
+injection, nested fence reconstruction, ledger preservation across budget grants,
+and the per-epoch grant cap.
+
+**`scripts/fence_probe.py`** — 9 attempts to reconstruct the prompt fence from
+user-controlled text (nested tokens, doubled tokens, tokens split by the
+normalizer's own whitespace handling). 0 bypasses.
+
+**`scripts/mutation_matrix.py`** — 17 deliberate semantic defects injected into
+the source, each scored on the three gates above. The unmutated baseline is green
+on **all three**, so the columns are meaningful rather than constant; the AST gate
+alone catches 12 of 17, and the logic gates catch the rest.
+
+**`scripts/gate_v03_runtime.py`** — the only gate that uses the *real* SDK:
 
 ```bash
-sha256sum -c FINAL_CHECKSUMS.txt
+bash scripts/setup_v03_sdk.sh /tmp/genvm-v03
+SDK=/tmp/genvm-v03/genvm/runners/genlayer-py-std/src
+STUB=/tmp/genvm-v03/stub
+PYTHONPATH="$STUB:$SDK" python3.13 scripts/gate_v03_runtime.py contracts/MeaningNonce.py
 ```
 
-Every tracked file, 53 of 53, including `contracts/MeaningNonce.py` at the frozen
-SHA. A mismatch anywhere means the package is not the reviewed one.
+23 checks against py-genlayer **v0.3.0-rc7**, in-memory, no network:
 
-## C. Deployed-source parity — PASS
+```
+[1] constructor        3 checks   __init__, storage auto-allocation, counters
+[2] seed_rejected_case 6 checks   case_id, case_count, status, authority,
+                                  created_at from gl.message.raw, derive_case_id
+[3] revert branches    7 checks   CASE_ALREADY_EXISTS, CASE_REF_REQUIRED,
+                                  EVIDENCE_JSON_INVALID, EVIDENCE_MUST_BE_JSON_ARRAY,
+                                  EVIDENCE_REQUIRED, AUTHORITY_CANNOT_SUBMIT_RETRY,
+                                  CASE_NOT_FOUND
+[4] EXACT_REPLAY       4 checks   outcome, model_called=false, status, blocked_count
+[5] authority control  3 checks   ONLY_AUTHORITY, grant budget, NO_FRESH_DECISION_PENDING
+GATE: ALL PASS
+```
 
-Repository check:
+`scripts/probe_v03_schema.py` runs the narrower check the network performs before
+a deploy — module load plus schema extraction. Result: `SCHEMA: OK methods=9
+(view=4, write=5)`.
+
+---
+
+## What the offline gates do NOT cover
+
+Every path that goes through `gl.vm.run_nondet` / `gl.nondet.exec_prompt` needs a
+real GenVM and is not exercised offline:
+
+- `IMMATERIAL_DELTA`
+- `MATERIAL_DELTA` and the transition to `AWAITING_FRESH_DECISION`
+- `ALREADY_ADJUDICATED`
+- `RETRY_BUDGET_EXHAUSTED`
+- `record_fresh_decision` and `CLOSED_ACCEPTED`
+
+These are exercised on Studio Next, through the dApp, and each result is read
+back from contract state before it is recorded.
+
+---
+
+## Source parity
 
 ```bash
-bash scripts/verify_deployed_source.sh
+npm run verify:deployed
 ```
 
-Observed on 2026-09-05:
+Fetches the source the network holds at the deployed address and compares it with
+`contracts/MeaningNonce.py`. The expected hash is computed from the repository
+file at run time rather than hardcoded, so the check cannot drift from the source.
+The comparison is newline-aware: the Studio editor may store CRLF, which changes
+the raw hash without changing a character of source.
 
-```text
-Raw deployed SHA256:        b550a8a2afe70b94151e86243fd92912e5f91d31dd82b59e621cb01685c3baab
-Expected CRLF SHA256:       b550a8a2afe70b94151e86243fd92912e5f91d31dd82b59e621cb01685c3baab
-Normalized deployed SHA256: d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f
-Expected LF source SHA256:  d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f
-SOURCE PARITY PROVEN
-```
+---
 
-StudioNet returned the same source text with CRLF line endings; normalizing line endings gives the exact frozen repository hash. Screenshot: `runtime-evidence/screenshots/08_source_parity_proven.png`.
+## On-chain test procedure
 
-## D. StudioNet runtime — PASS
+Two wallets are required. `submit_retry` reverts with
+`AUTHORITY_CANNOT_SUBMIT_RETRY` when the sender is the case authority, so a
+single wallet cannot walk the flow. Both need GEN on Studio Next for fees.
 
-Runtime sequence actually exercised on `0x1A81177f32d22185F421F0019714DCB6e3124263`:
+| Step | Wallet | Action | Expected |
+|---|---|---|---|
+| 1 | A | `seed_rejected_case` with 2 baseline items | `LOCKED_REJECTED`, authority = A |
+| 2 | B | `submit_retry`, baseline unchanged, new wording | `EXACT_REPLAY`, `model_called=false` |
+| 3 | B | add one trivial item | `IMMATERIAL_DELTA`, `model_called=true`, `model_calls_this_epoch=1` |
+| 4 | B | same evidence as step 3, different wording | `ALREADY_ADJUDICATED`, `model_calls_this_epoch` still 1 |
+| 5 | B | drop a baseline item | `BASELINE_REMOVAL_BLOCKED`, baseline unchanged |
+| 6 | B | add genuinely new material evidence | `MATERIAL_DELTA` → `AWAITING_FRESH_DECISION` |
+| 7 | A | `record_fresh_decision` ACCEPTED, evidence identical to step 6 | `CLOSED_ACCEPTED`, `attempt_count = 4` |
+| 8 | A | retry on the closed case | `CASE_NOT_RETRYABLE` |
 
-1. Authority seeded rejected baseline A+B.
-2. Requester reworded while reordering/duplicating A+B → `EXACT_REPLAY`, `model_called=false`.
-3. Requester removed B → `BASELINE_REMOVAL_BLOCKED`; baseline remained A+B.
-4. Irrelevant addition → `IMMATERIAL_DELTA`.
-5. Same candidate, different request wording → `ALREADY_ADJUDICATED`, `model_called=false`, prior result `IMMATERIAL_DELTA`; model call count did not increase.
-6. Material addition → `MATERIAL_DELTA`, status `AWAITING_FRESH_DECISION`.
-7. Authority declined reopening → status returned to `LOCKED_REJECTED`; consumed model count was not refilled.
-8. Another material addition reopened the case.
-9. Authority tried to record a fresh decision with the wrong evidence set → rollback `DECISION_EVIDENCE_MUST_MATCH_REOPENED_ATTEMPT`.
-10. Authority recorded fresh `REJECTED` with the exact reopened candidate → epoch 2, full candidate became new baseline, adjudication/model/grant counters reset.
-11. Reword/reorder of the new epoch-2 baseline → `EXACT_REPLAY`, `model_called=false`.
-12. New C-301 addition → `MATERIAL_DELTA`, `AWAITING_FRESH_DECISION`.
-13. Authority recorded fresh `ACCEPTED` with exact candidate → `CLOSED_ACCEPTED`.
-14. Requester retried after close → rollback `CASE_NOT_RETRYABLE`.
-15. Separate role-guard case: authority tried to submit its own retry → rollback `AUTHORITY_CANNOT_SUBMIT_RETRY`; `attempt_count=0`, `model_calls_this_epoch=0`.
+Step 4 is the one worth being careful with: the cache key hashes the evidence
+set, **not** the request text. Changing both puts the call back on the model
+path instead of the cached path.
 
-Machine-readable states and screenshots are under `runtime-evidence/`.
+Step 7 requires `evidence_json` byte-identical to the pending attempt, otherwise
+the call reverts with `DECISION_EVIDENCE_MUST_MATCH_REOPENED_ATTEMPT`.
 
-## E. Frontend verification path
+### Reading results correctly
 
-The checked-in frontend defaults to `0x1A81177f32d22185F421F0019714DCB6e3124263`.
-
-Production URL: `https://meaning-nonce.vercel.app`
-
-Expected submission-facing behavior:
-
-1. Overview, Seed Case, Submit Retry, Resolve, Inspect Cases, and Verification are separate navigation surfaces.
-2. Seed Case opens with empty case reference, rejection reason, and baseline evidence fields.
-3. Submit Retry opens with empty case ID/request fields and does not preload candidate evidence before a finalized case is loaded.
-4. Resolve opens with no preselected decision or prefilled reason/evidence; decision controls appear only from loaded case state.
-5. Inspect Cases starts empty but exposes verified runtime case shortcuts separately from the input form.
-6. Verification presents executed StudioNet outcomes and deployment links without preloading transaction forms.
-7. The Semantic Boundary Scan is UI-only explanatory motion: it does not reveal a verdict until the finalized attempt is read back after the write.
-
-A dependency-installed local `npm run build` is not claimed as reproduced in the packaging environment where package installation was unavailable.
-
-
-### E2. Live dApp runtime evidence
-
-A complete reviewer-facing runtime walkthrough was executed through the production
-dApp at `https://meaning-nonce.vercel.app` against the frozen StudioNet deployment.
-These screenshots complement the deeper StudioNet evidence in `runtime-evidence/screenshots/`;
-they do not replace the rollback, role-guard, or source-parity proofs recorded there.
-
-Captured checkpoints:
-
-1. `LOCKED_REJECTED` baseline with zero attempts and zero semantic model calls.
-2. `EXACT_REPLAY` with `model_called=false`.
-3. `IMMATERIAL_DELTA` with `model_called=true`.
-4. `ALREADY_ADJUDICATED` with `model_called=false`; the semantic-call counter does not increase.
-5. `MATERIAL_DELTA` -> `AWAITING_FRESH_DECISION`, with two semantic model calls used in the epoch.
-6. The decision authority loads the bound candidate evidence and records fresh `ACCEPTED`.
-7. Final `CLOSED_ACCEPTED` state with 4 attempts and 2/3 semantic model calls.
-
-Reviewer-facing screenshots:
-
-```text
-runtime-evidence/dapp-screenshots/01_baseline_LOCKED_REJECTED.png
-runtime-evidence/dapp-screenshots/02_EXACT_REPLAY_model_false.png
-runtime-evidence/dapp-screenshots/03_IMMATERIAL_DELTA_model_true.png
-runtime-evidence/dapp-screenshots/04_ALREADY_ADJUDICATED_model_false.png
-runtime-evidence/dapp-screenshots/05_MATERIAL_DELTA_AWAITING_FRESH_DECISION.png
-runtime-evidence/dapp-screenshots/06_Authority_ACCEPTED_bound_evidence.png
-runtime-evidence/dapp-screenshots/07_FINAL_CLOSED_ACCEPTED.png
-```
-
-## F. Security review checklist
-
-The project is evaluated against three recurring failure modes:
-
-- **Non-bypassable consequence:** audit decline/close and related escape paths so a claimed consequence cannot be escaped by an early exit.
-- **Immutability ≠ provenance:** never call self-declared/commit-pinned data canonical authority without an independent trust root.
-- **Static evidence ≠ executable behavioral proof:** never present marker/vector/source checks as contract runtime tests.
-
-MeaningNonce's StudioNet evidence addresses executable behavior; its README explicitly narrows the trust-root claim. The anti-reroll ledger/budget claims are scoped to **committed** consensus rounds; a no-majority round reverts and persists neither ledger nor budget state.
+A transaction reaching `ACCEPTED` in the consensus history is **not** a success
+signal — a failed transaction walks the same
+`PENDING → PROPOSING → COMMITTING → REVEALING → ACCEPTED` path. The authority is
+the postcondition: re-read `get_case` / `get_attempt` and compare against the
+table above. The dApp does this automatically and reports nothing as done until
+the read-back matches.
