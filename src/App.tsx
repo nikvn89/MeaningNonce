@@ -674,6 +674,16 @@ function App() {
             }
           >
             <CaseLoader caseId={caseId} setCaseId={setCaseId} busy={busy} onLoad={() => inspect(caseId, attemptId)} />
+            <DeriveCaseId
+              account={account}
+              busy={busy}
+              onDerive={async (authorityHex, ref) => {
+                const derived = await readString(contractAddress, 'derive_case_id', [authorityHex, ref]);
+                setCaseId(derived);
+                await inspect(derived, '');
+              }}
+              onError={(message) => setNotice(message)}
+            />
             <Field label="Attempt ID" hint="Optional. Leave blank to load the latest attempt.">
               <input value={attemptId} onChange={(e) => setAttemptId(e.target.value)} />
             </Field>
@@ -846,6 +856,70 @@ function CaseLoader({
       </label>
       <button className="secondaryButton compact" disabled={busy || !caseId} onClick={onLoad}>
         Load case
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Recover a case id from its two public inputs.
+ *
+ * `case_id = hash(authority, case_ref)`, so anyone who knows the authority
+ * address and the case reference can recompute it — the contract exposes
+ * `derive_case_id` as a view for exactly this. Without this form a reader who
+ * reloads the page has no way back to a case they just created, and there is no
+ * list view to fall back on.
+ */
+function DeriveCaseId({
+  account,
+  busy,
+  onDerive,
+  onError,
+}: {
+  account: string;
+  busy: boolean;
+  onDerive: (authorityHex: string, caseRef: string) => Promise<void>;
+  onError: (message: string) => void;
+}) {
+  const [authority, setAuthority] = useState('');
+  const [ref, setRef] = useState('');
+  const [working, setWorking] = useState(false);
+
+  const authorityValue = authority || account;
+  const ready = /^0x[a-fA-F0-9]{40}$/.test(authorityValue) && ref.trim() !== '';
+
+  async function run() {
+    setWorking(true);
+    try {
+      await onDerive(authorityValue, ref.trim());
+    } catch (error) {
+      onError((error as Error)?.message || String(error));
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return (
+    <div className="deriveBox">
+      <span className="sectionEyebrow">Lost the case ID?</span>
+      <p className="sideNote">
+        A case id is derived from its authority address and case reference. Recompute it here — no wallet needed.
+      </p>
+      <div className="deriveFields">
+        <label className="field">
+          <span className="fieldLabel">
+            Authority address
+            {account && <small>Leave blank to use the connected wallet.</small>}
+          </span>
+          <input value={authority} onChange={(e) => setAuthority(e.target.value)} placeholder={account || '0x…'} />
+        </label>
+        <label className="field">
+          <span className="fieldLabel">Case reference</span>
+          <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="e.g. REFUND-2291" />
+        </label>
+      </div>
+      <button className="secondaryButton compact" disabled={busy || working || !ready} onClick={run}>
+        {working ? 'Deriving…' : 'Derive case ID & load'}
       </button>
     </div>
   );

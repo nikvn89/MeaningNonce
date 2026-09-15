@@ -329,3 +329,16 @@ button,input,textarea,select{font-family:inherit}
 .txGate .txGateHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .txGate .txGateHead b { display: block; font-size: 17px; letter-spacing: -0.01em; }
 .txGateNote { margin: 0; font-size: 12px; line-height: 1.5; opacity: 0.66; }
+
+/* --- Derive case id (recovery path on Inspect) ---------------------------- */
+.deriveBox{
+  display:flex; flex-direction:column; gap:10px;
+  padding:14px 16px; margin:2px 0 4px;
+  border:1px dashed #8794b33d; border-radius:12px;
+  background:#0a0e1880;
+}
+.deriveBox .sideNote{margin:0;}
+.deriveFields{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.deriveBox .field{margin:0;}
+.deriveBox button{align-self:flex-start;}
+@media (max-width:860px){ .deriveFields{grid-template-columns:1fr;} }
