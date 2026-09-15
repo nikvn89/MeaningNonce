@@ -4,8 +4,8 @@
 
 MeaningNonce is a semantic anti-verdict-shopping primitive for GenLayer. It records a rejected
 decision together with its evidence baseline on-chain. A retry that carries no new evidence is
-blocked deterministically — no model call, no consensus round, no cost. Only an explicit evidence
-delta is sent through GenLayer consensus, which answers one narrow question: is the new evidence
+blocked deterministically without a materiality-model call. The retry still submits a paid write
+transaction and proceeds through transaction consensus. Only an explicit evidence delta is sent through GenLayer consensus, which answers one narrow question: is the new evidence
 material enough to reopen the recorded rejection?
 
 MeaningNonce does not decide the underlying case and does not verify whether evidence is true.
@@ -67,8 +67,8 @@ Studio Next for fees.
    - resubmitting that same evidence set with different wording → `ALREADY_ADJUDICATED`, no second
      model call (the cache key hashes evidence, not request text)
    - adding genuinely new material evidence → `MATERIAL_DELTA` → `AWAITING_FRESH_DECISION`
-3. **Resolve** (wallet A) — record the fresh decision, or decline the reopening. The evidence you
-   submit must match the pending attempt exactly, or the call reverts with
+3. **Resolve** (wallet A) — record the fresh decision, or decline the reopening. The canonical evidence hashes you
+   submit must match the pending attempt, or the call reverts with
    `DECISION_EVIDENCE_MUST_MATCH_REOPENED_ATTEMPT`.
 
 Every case is created by the person testing it, so nothing depends on shared state.
@@ -138,3 +138,18 @@ is the default in `.env.example`. A live deployment link also resolved on
 `VITE_EXPLORER_URL` to whichever renders it; nothing else in the app depends on that host.
 
 Migration reference: <https://docs.genlayer.com/developers/consensus-v06-migration>
+
+## Verified demo case
+
+Studio Next contract: `0x8CB652d2a1d3E01DdD4eD1515F2c3F665c7D10b4`.
+Case reference: `WARRANTY-4417`.
+Case ID: `4aba8132a789596bd8662e967439e242b5681e5d3bcdccc9a21e1df55bbe5af6`.
+Latest attempt: `c1c69f44290ff7014108ef795a602c1c3cbfcdfe79f5a049e99d336d56dc1fc8`.
+Open Inspect Cases, paste the case ID, leave Attempt ID empty, and refresh contract state.
+Read-only inspection needs no wallet. The published app currently has no configured showcase buttons.
+The Verification page lists expected behaviours; it is not an executed runtime-proof archive.
+
+Source parity compares CRLF/CR as LF and one optional terminal LF only. The raw repository SHA256
+above remains unchanged. The deployed source has CRLF and omits the terminal newline; its canonical
+SHA256 is `22e7acc64c3995e16b12ad1c590b6c775f06e298ca34ed55ee6730c46d57a95d`.
+Other source differences still fail the verifier.

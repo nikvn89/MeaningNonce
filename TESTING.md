@@ -107,8 +107,9 @@ npm run verify:deployed
 Fetches the source the network holds at the deployed address and compares it with
 `contracts/MeaningNonce.py`. The expected hash is computed from the repository
 file at run time rather than hardcoded, so the check cannot drift from the source.
-The comparison is newline-aware: the Studio editor may store CRLF, which changes
-the raw hash without changing a character of source.
+The comparison normalizes CRLF/CR to LF and removes at most one optional terminal
+LF from each copy. Raw hashes are reported separately. It accepts this editor-only
+formatting difference and still rejects every substantive source difference.
 
 ---
 
@@ -126,15 +127,17 @@ single wallet cannot walk the flow. Both need GEN on Studio Next for fees.
 | 4 | B | same evidence as step 3, different wording | `ALREADY_ADJUDICATED`, `model_calls_this_epoch` still 1 |
 | 5 | B | drop a baseline item | `BASELINE_REMOVAL_BLOCKED`, baseline unchanged |
 | 6 | B | add genuinely new material evidence | `MATERIAL_DELTA` → `AWAITING_FRESH_DECISION` |
-| 7 | A | `record_fresh_decision` ACCEPTED, evidence identical to step 6 | `CLOSED_ACCEPTED`, `attempt_count = 4` |
+| 7 | A | `record_fresh_decision` ACCEPTED, evidence identical to step 6 | `CLOSED_ACCEPTED`, `attempt_count = 5` |
 | 8 | A | retry on the closed case | `CASE_NOT_RETRYABLE` |
 
 Step 4 is the one worth being careful with: the cache key hashes the evidence
 set, **not** the request text. Changing both puts the call back on the model
 path instead of the cached path.
 
-Step 7 requires `evidence_json` byte-identical to the pending attempt, otherwise
-the call reverts with `DECISION_EVIDENCE_MUST_MATCH_REOPENED_ATTEMPT`.
+Step 7 canonicalizes `evidence_json` and requires its evidence hashes to match
+the pending attempt. Evidence order and duplicate representations do not create
+a mismatch; changed evidence content does. A mismatched canonical evidence set
+reverts with `DECISION_EVIDENCE_MUST_MATCH_REOPENED_ATTEMPT`.
 
 ### Reading results correctly
 
