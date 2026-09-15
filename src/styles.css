@@ -323,3 +323,9 @@ button,input,textarea,select{font-family:inherit}
   .pageHeading h1{font-size:29px}.pageHeading p{font-size:13px}
   .formCard{padding:20px}.field input,.field textarea,.field select,.caseLoader input{font-size:16px}
 }
+
+/* --- Transaction Kit gate (Consensus v0.6 fees) --------------------------- */
+.txGate { display: flex; flex-direction: column; gap: 14px; }
+.txGate .txGateHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.txGate .txGateHead b { display: block; font-size: 17px; letter-spacing: -0.01em; }
+.txGateNote { margin: 0; font-size: 12px; line-height: 1.5; opacity: 0.66; }

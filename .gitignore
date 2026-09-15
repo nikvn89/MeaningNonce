@@ -2,11 +2,9 @@ node_modules/
 dist/
 .env
 .env.local
-*.log
-.venv/
+.env.*.local
+.vercel/
+*.tsbuildinfo
 __pycache__/
 .pytest_cache/
-keypair.json
-*.pem
-
-*.tsbuildinfo
+.DS_Store

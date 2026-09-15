@@ -1,123 +1,140 @@
 # MeaningNonce
 
-<img src="public/logo.png" alt="MeaningNonce logo" width="112" />
+**Changing the wording is not a new case.**
 
-**Semantic anti-verdict-shopping for AI-agent retries on GenLayer.**
+MeaningNonce is a semantic anti-verdict-shopping primitive for GenLayer. It records a rejected
+decision together with its evidence baseline on-chain. A retry that carries no new evidence is
+blocked deterministically — no model call, no consensus round, no cost. Only an explicit evidence
+delta is sent through GenLayer consensus, which answers one narrow question: is the new evidence
+material enough to reopen the recorded rejection?
 
-> Traditional nonces stop exact transaction replay. MeaningNonce stops a rejected request from buying another semantic roll merely by changing its wording when the evidence is unchanged or the same evidence set has already been adjudicated.
+MeaningNonce does not decide the underlying case and does not verify whether evidence is true.
 
-## StudioNet deployment
+---
 
-- Contract: `0x1A81177f32d22185F421F0019714DCB6e3124263`
-- Explorer: `https://explorer-studio.genlayer.com/address/0x1A81177f32d22185F421F0019714DCB6e3124263`
-- Frozen repository contract SHA-256: `d0fbf1982ae07411d1b3b0e9af281f41de17391268e7a8d9c91f882c0ab1934f`
-- Live dApp: `https://meaning-nonce.vercel.app`
-- Runtime verification: [`runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md`](./runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md)
+## Deployment
 
-## Core behavior
+| | |
+|---|---|
+| Network | **GenLayer Studio Next** (Consensus v0.6) |
+| RPC | `https://studio-next.genlayer.com/api` |
+| Chain ID | `61997` |
+| Contract | `0x8CB652d2a1d3E01DdD4eD1515F2c3F665c7D10b4` |
+| Contract source | [`contracts/MeaningNonce.py`](contracts/MeaningNonce.py) |
+| Source sha256 | `d561ae4588b1113c4c0224fb3c000e0947f5df6fc094651f7b5c77933a23fb6d` |
+| GenVM | `v0.3.0-rc7`, runner `py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng` |
 
-A decision authority seeds a previously rejected case with a case reference, rejection reason, and evidence baseline. Any non-authority wallet may submit a retry against that same contract-local case.
+---
 
-- Same normalized evidence → `EXACT_REPLAY`, no model call.
-- Candidate removes baseline evidence → `BASELINE_REMOVAL_BLOCKED`, no model call and baseline does not shrink.
-- Same already-adjudicated candidate set → `ALREADY_ADJUDICATED`, no second semantic roll.
-- At most three distinct semantic candidates per budget window; exhaustion → `RETRY_BUDGET_EXHAUSTED` without a model call.
-- Only explicit additions reach GenLayer's bounded materiality question.
-- `IMMATERIAL_DELTA` keeps the case locked.
-- `MATERIAL_DELTA` opens `AWAITING_FRESH_DECISION`; it does **not** decide the merits.
-- Only the authority may decline a reopening, grant more bounded budget, or record the fresh upstream `REJECTED` / `ACCEPTED` decision.
-- Fresh `REJECTED` installs the full reopened candidate as the new baseline and opens a new epoch.
-- Fresh `ACCEPTED` closes the case as `CLOSED_ACCEPTED`.
-- The authority cannot submit retries against its own case.
-
-Request wording is recorded for audit but excluded from the semantic materiality prompt and from the deterministic evidence-set key.
-
-## Why GenLayer is load-bearing
-
-Deterministic code can canonicalize evidence, detect exact replay/removal, remember adjudicated candidate sets, enforce roles, and bound retry grinding. It cannot decide whether a genuinely new natural-language evidence delta is materially relevant to reopening the recorded rejection. GenLayer is used only for that narrow classification.
-
-## Explicit trust root / honest scope
-
-The wallet that seeds a case is only the **contract-local decision authority** for that `(authority, case_ref)` namespace. MeaningNonce does not prove that the wallet is a canonical external-world institution, does not prove supplied evidence is true, and does not claim provenance merely because data is immutable. Evidence strings remain assertions supplied to the contract.
-
-MeaningNonce also does not claim perfect semantic deduplication. A paraphrased evidence item can hash differently and consume a bounded semantic slot, and a third party can consume a budget window before a legitimate requester.
-
-Authority budget restoration is the recovery path, and it has a floor worth stating plainly. Grants are capped at five per epoch, and the epoch counter resets in exactly one place — a fresh `REJECTED` decision, which requires a pending `MATERIAL_DELTA`, which requires a semantic call. So the reset that restores the budget sits behind the budget it would restore: eighteen spam retries from any wallet drive a `case_id` to a state where **nobody, authority included, can reopen it again**. The same terminal state is reachable a second way, because the baseline only ever grows and a retry must carry all of it — a baseline holding `MAX_EVIDENCE_ITEMS` items refuses every possible future retry in canonicalisation.
-
-Neither is a lost decision. Case identity is `authority + case_ref`, so the authority re-seeds the same rejection under a new reference and retries resume; it is a griefing tax per reference, not permanent denial, and it is not a laundering route, because re-seeding is authority-only and the authority is the party the lock protects. Both bounds and the recovery path ship as executable tests: `tests/direct/test_liveness_bounds.py` and `tests/direct/test_recovery_probe.py`.
-
-## Runtime result
-
-The StudioNet run exercised the load-bearing paths, including:
-
-```text
-EXACT_REPLAY -> model_called=false
-BASELINE_REMOVAL_BLOCKED -> model_called=false, baseline unchanged
-IMMATERIAL_DELTA -> same candidate reword -> ALREADY_ADJUDICATED, no reroll
-MATERIAL_DELTA -> AWAITING_FRESH_DECISION
-evidence mismatch -> DECISION_EVIDENCE_MUST_MATCH_REOPENED_ATTEMPT
-fresh REJECTED -> epoch reset + full new baseline
-fresh ACCEPTED -> CLOSED_ACCEPTED
-retry after close -> CASE_NOT_RETRYABLE
-authority self-retry -> AUTHORITY_CANNOT_SUBMIT_RETRY, no attempt/model call
-```
-
-Main case finished `ACCEPTED / CLOSED_ACCEPTED` at epoch 2. See the runtime evidence document for exact case IDs and snapshots.
-
-## Repository-executable gates
+## Run it locally
 
 ```bash
-npm run check:contract
-npm run test:logic
-npm run test:adversarial
-npm run test:fence
-npm run test:mutations
-npm run lint:genvm
-npm run test:direct
-npm run build
+npm ci
+cp .env.example .env          # then set VITE_CONTRACT_ADDRESS
+npm run dev
 ```
 
-Recorded packaging-environment results:
+Build exactly the way Vercel does, which is also the only smoke test that catches a broken
+`tsconfig`:
 
-```text
-PASS AST contract invariants
-PASS actual-contract off-chain logic: 15/15
-PASS executable adversarial actual-contract suite: 12/12
-PASS prompt-fence probe: 0/9 bypasses
-caught mutations: 17/17
-PASS Python compile
+```bash
+npm run build     # tsc -b && vite build
 ```
 
-In an environment with the pinned dependencies installed, the exact-source gates
-also pass: `genvm_linter.cli lint` exits 0 on three checks, and
-`pytest tests/direct/` runs 23 tests on a real GenVM build — the 19 behavioural
-and adversarial tests plus four that prove the project's own limits
-(`test_liveness_bounds.py`, `test_recovery_probe.py`). `tests/direct/conftest.py`
-pins the GenVM version so a clean machine executes the same runtime rather than
-resolving "latest".
+## Deploy to Vercel
 
-The original packaging environment had no `genvm-linter` / `genlayer-test` and its `npm install` timed out, which is why the two result blocks above are reported separately rather than merged: the first is what that environment executed, the second is what a machine with `requirements.txt` installed executes. Neither is a source-marker assertion. Exact commands are in `TESTING.md`.
+1. Push this repository to GitHub.
+2. Import it in Vercel. `vercel.json` already sets framework `vite`, install `npm ci`, build
+   `npm run build`, output `dist`, and an SPA rewrite.
+3. Add the environment variables from `.env.example` in **Project → Settings → Environment
+   Variables**. At minimum `VITE_CONTRACT_ADDRESS`. Vite inlines `VITE_*` at build time, so a
+   change needs a redeploy, not just a restart.
 
-## Frontend
+---
 
-The dApp is stamped to the runtime-tested StudioNet deployment by default. `VITE_CONTRACT_ADDRESS` remains an optional override.
+## How to try it
 
-The interface is organized as a Web3 protocol workspace with persistent navigation, connected-contract context, clear status panels, and dedicated Seed / Retry / Resolve / Inspect / Verification surfaces. **Action forms are empty by default**: no runtime case, rejection reason, request text, evidence set, or decision is prefilled. Runtime reference cases are isolated to inspection and verification surfaces so reviewers can inspect executed behavior without turning transaction forms into a scripted demo.
+You need **two wallets**. `submit_retry` reverts with `AUTHORITY_CANNOT_SUBMIT_RETRY` when the
+sender is the case authority, so a single wallet cannot walk the whole flow. Both need GEN on
+Studio Next for fees.
 
-The Submit Retry page includes the signature **Semantic Boundary Scan**: wording visibly exits the decision boundary, the loaded baseline locks in place, candidate evidence is scanned, and the outcome is revealed only after the finalized attempt is read back from StudioNet. It is explanatory motion, not a simulated verdict.
+1. **Seed** (wallet A) — record a rejection reference, its reason, and the baseline evidence, one
+   item per line. Wallet A becomes the decision authority for that case reference.
+2. **Retry** (wallet B) — load the case, then submit the **full** candidate evidence set.
+   - resubmitting the baseline unchanged → `EXACT_REPLAY`, `model_called=false`
+   - dropping a baseline item → `BASELINE_REMOVAL_BLOCKED`
+   - adding a trivial item → one model call → usually `IMMATERIAL_DELTA`
+   - resubmitting that same evidence set with different wording → `ALREADY_ADJUDICATED`, no second
+     model call (the cache key hashes evidence, not request text)
+   - adding genuinely new material evidence → `MATERIAL_DELTA` → `AWAITING_FRESH_DECISION`
+3. **Resolve** (wallet A) — record the fresh decision, or decline the reopening. The evidence you
+   submit must match the pending attempt exactly, or the call reverts with
+   `DECISION_EVIDENCE_MUST_MATCH_REOPENED_ATTEMPT`.
 
-The client does not treat `FINALIZED` alone as successful execution.
+Every case is created by the person testing it, so nothing depends on shared state.
 
-In practice the postcondition is the whole check, and that is deliberate. `receipt.txExecutionResultName` is set only by `decodeTransaction` in genlayer-js 1.1.8, while `waitForTransactionReceipt` routes a chain with `isStudio` through `decodeLocalnetTransaction`, which never sets it — so on StudioNet the enum is always absent and the branch that would read it never fires. Every write therefore verifies a method-specific finalized on-chain state postcondition instead: `seed` re-derives the case and checks its authority, `retry` requires exactly one new attempt bound to the connected requester, `resolve` requires the expected status and a cleared pending attempt, `grantBudget` requires the counters to have moved, and `decline` requires the prior locked state to be restored. Reading state back is stronger evidence than an enum would have been.
+## Honest limitations
 
-Brand files are `public/logo.png` and `public/brand-lockup.png`; design rationale is documented in [`BRAND_ASSETS.md`](./BRAND_ASSETS.md).
+- The materiality verdict is **one stochastic classification per distinct evidence set**, not a
+  proof about the evidence. The contract bounds how many of those a case can buy:
+  `MAX_MODEL_CALLS_PER_EPOCH = 3`, with at most `MAX_BUDGET_GRANTS_PER_EPOCH = 5` authority resets.
+- The contract does **not** check whether evidence is true, and does not decide the underlying
+  case. It only decides whether a retry is entitled to a fresh upstream decision.
+- Validator rerun is convergence discipline, not injection resistance: the validator rebuilds the
+  same prompt, so an injection that steers one model steers them all. The real defences are the
+  prompt fence and the two-value enum whitelist.
+- A case whose baseline reaches `MAX_EVIDENCE_ITEMS = 12` refuses every future retry, and an
+  exhausted budget with no remaining grants closes the case reference permanently. Recovery is by
+  re-seeding under a new case reference.
+- `CLOSED_ACCEPTED` is terminal. There is no reopen path.
 
-## Reviewer entry points
+---
 
-- `LOCKED_SPEC.md` — locked product scope and implementation boundaries.
-- `contracts/MeaningNonce.py` — frozen production source.
-- `runtime-evidence/STEWARD_RUNTIME_VERIFICATION.md` — StudioNet behavior verification.
-- `runtime-evidence/RUNTIME_EVIDENCE.json` — machine-readable snapshots.
-- `scripts/test_contract_logic.py` — executable actual-source behavior tests.
-- `tests/direct/` — GenLayer Direct Mode tests, including `test_liveness_bounds.py` and `test_recovery_probe.py`, which execute the limitations named in the honest-scope section above.
-- `TESTING.md` — exact reproduction and verification path.
+## Frontend architecture
+
+- **Vite + React 18 + TypeScript**, no server. Reads need no wallet.
+- **One network definition.** `src/network.ts` builds a single chain object from env and every
+  consumer — reads, MetaMask, Transaction Kit — uses it, so an RPC override can never sign for a
+  chain other than the one being read. The published SDK has no Studio Next preset, so the object
+  is `studioDevnet` (Consensus v0.6 wiring, chain 61997) with the RPC moved to Studio Next.
+- **Fees.** Consensus v0.6 charges for writes, so every write goes through
+  `@genlayer/transaction-kit` — estimate, fee review, hold-to-sign, tracked status — instead of a
+  bare `writeContract`.
+- **A decided transaction is not a success signal.** A failed deploy still walks
+  `PENDING → PROPOSING → COMMITTING → REVEALING → ACCEPTED`. `src/TxGate.tsx` reports nothing as
+  done until it has re-read contract state and found the postcondition it expected: the seed
+  produced a case owned by the sender, the retry created exactly one new attempt bound to the
+  sender, the fresh decision produced the exact expected status with no pending attempt left.
+- **`txExecutionResultName` is not treated as mandatory.** On Studio chains the SDK's local decoder
+  does not populate it, so requiring it would throw on every successful transaction.
+- **The wallet's chain is checked before signing.** genlayer-js skips its own chain assertion for
+  Studio chains, so `ensureNetwork()` in `src/genlayer.ts` is that missing check.
+- **No showcase case IDs are hardcoded.** The previous build shipped two case IDs from the old
+  StudioNet deployment; those records do not exist here. Set `VITE_RUNTIME_CASE_ID` and
+  `VITE_ROLE_CASE_ID` only after creating and reading back the corresponding cases.
+
+## Contract gates
+
+```bash
+bash scripts/setup_v03_sdk.sh /tmp/genvm-v03
+SDK=/tmp/genvm-v03/genvm/runners/genlayer-py-std/src
+STUB=/tmp/genvm-v03/stub
+PYTHONPATH="$STUB:$SDK" python3.13 scripts/gate_v03_runtime.py contracts/MeaningNonce.py
+```
+
+23 deterministic checks against the real py-genlayer v0.3.0-rc7 SDK: constructor and storage
+allocation, `seed_rejected_case`, seven revert branches, the `EXACT_REPLAY` path, and the
+authority role guard. It runs offline, in-memory, with no network.
+
+It does **not** cover anything that goes through `gl.vm.run_nondet` / `gl.nondet.exec_prompt` —
+`IMMATERIAL_DELTA`, `MATERIAL_DELTA`, `ALREADY_ADJUDICATED`, `RETRY_BUDGET_EXHAUSTED` and
+`record_fresh_decision` need a real GenVM and are exercised on Studio Next.
+
+## Notes on network values
+
+The migration announcement lists the explorer as `https://explorer-studio-dev.genlayer.com/`, which
+is the default in `.env.example`. A live deployment link also resolved on
+`https://explorer-studio-next.genlayer.com/`. Open both against the contract address and set
+`VITE_EXPLORER_URL` to whichever renders it; nothing else in the app depends on that host.
+
+Migration reference: <https://docs.genlayer.com/developers/consensus-v06-migration>

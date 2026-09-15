@@ -1,12 +1,15 @@
-# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+# v0.3.0
+# { "Depends": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng" }
 
-from genlayer import *
+import genlayer as gl
+from genlayer.types import *
+from genlayer.storage import TreeMap
 import hashlib
 import json
 import re
 
 
-class MeaningNonce(gl.Contract):
+class MeaningNonce(gl.contract.Contract):
     """
     A semantic anti-verdict-shopping primitive.
 
@@ -44,8 +47,9 @@ class MeaningNonce(gl.Contract):
     MAX_BUDGET_GRANTS_PER_EPOCH = 5
 
     def __init__(self) -> None:
-        self.cases = TreeMap()
-        self.attempts = TreeMap()
+        # v0.3: storage fields (TreeMap / DynArray) are allocated by the storage
+        # layout itself. Calling TreeMap() here raises
+        # GenerationError: generic storage classes can not be instantiated.
         self.case_count = u64(0)
         self.attempt_seq = u64(0)
 
@@ -219,7 +223,7 @@ or
                 return False
             return validator_decision == leader_decision
 
-        return gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
+        return gl.vm.run_nondet(leader_fn, validator_fn)
 
     @gl.public.view
     def derive_case_id(self, authority_hex: str, case_ref: str) -> str:
@@ -261,7 +265,7 @@ or
         if self.cases.get(case_id, "") != "":
             raise gl.vm.UserError("CASE_ALREADY_EXISTS")
 
-        now = gl.message_raw["datetime"]
+        now = gl.message.raw["datetime"]
         case_data = {
             "case_id": case_id,
             "authority": authority.as_hex,
@@ -308,7 +312,7 @@ or
         baseline_hashes = case_data["baseline_hashes"]
 
         attempt_id = self._next_attempt_id(case_id, gl.message.sender_address)
-        now = gl.message_raw["datetime"]
+        now = gl.message.raw["datetime"]
         request_hash = hashlib.sha256(request_clean.encode("utf-8")).hexdigest()
 
         removal_detected = False
@@ -399,7 +403,7 @@ or
             raise gl.vm.UserError("BUDGET_GRANT_LIMIT_REACHED")
         case_data["model_calls_this_epoch"] = 0
         case_data["budget_grants_this_epoch"] = grants_used + 1
-        case_data["updated_at"] = gl.message_raw["datetime"]
+        case_data["updated_at"] = gl.message.raw["datetime"]
         self._save_case(case_id, case_data)
 
     @gl.public.write
@@ -413,7 +417,7 @@ or
         case_data["status"] = self.STATUS_LOCKED_REJECTED
         case_data["pending_attempt_id"] = ""
         case_data["last_decline_note"] = reason
-        case_data["updated_at"] = gl.message_raw["datetime"]
+        case_data["updated_at"] = gl.message.raw["datetime"]
         self._save_case(case_id, case_data)
 
     @gl.public.write
@@ -444,7 +448,7 @@ or
         if evidence_hashes != pending_attempt["candidate_hashes"]:
             raise gl.vm.UserError("DECISION_EVIDENCE_MUST_MATCH_REOPENED_ATTEMPT")
 
-        now = gl.message_raw["datetime"]
+        now = gl.message.raw["datetime"]
         case_data["decision"] = decision
         case_data["decision_reason"] = reason
         case_data["baseline_evidence"] = evidence_items
