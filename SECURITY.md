@@ -20,8 +20,10 @@ These hold without any model call:
 - an evidence set already adjudicated in this epoch never buys a second model call
   (`ALREADY_ADJUDICATED`) — the cache key hashes the evidence set, not the request wording
 - the case authority cannot submit a retry against its own case (`AUTHORITY_CANNOT_SUBMIT_RETRY`)
-- a fresh decision must carry evidence byte-identical to the pending attempt
-  (`DECISION_EVIDENCE_MUST_MATCH_REOPENED_ATTEMPT`)
+- a fresh decision must carry an evidence set whose canonical hashes match the pending
+  attempt (`DECISION_EVIDENCE_MUST_MATCH_REOPENED_ATTEMPT`). Canonicalisation collapses
+  whitespace, removes duplicates and sorts by content hash, so reordering or re-spacing
+  the same evidence is not a mismatch — changed evidence content is
 - `CLOSED_ACCEPTED` is terminal
 
 ### What is stochastic
