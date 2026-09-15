@@ -342,3 +342,10 @@ button,input,textarea,select{font-family:inherit}
 .deriveBox .field{margin:0;}
 .deriveBox button{align-self:flex-start;}
 @media (max-width:860px){ .deriveFields{grid-template-columns:1fr;} }
+
+/* --- Resolve: pending-evidence sync row ---------------------------------- */
+.evidenceSync{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  margin:-4px 0 2px;
+}
+.evidenceSync span{font-size:12px; line-height:1.5; color:#8794b3; flex:1; min-width:220px;}

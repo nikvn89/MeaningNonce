@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { SubmitInput, TrackedStatus } from '@genlayer/transaction-kit-react';
 import { DEFAULT_CONTRACT_ADDRESS, ROLE_GUARD_CASE_ID, RUNTIME_CASE_ID } from './config';
 import {
@@ -293,6 +293,65 @@ function App() {
       setNotice('Loaded latest contract state.');
     } catch (e) {
       setNotice(describeChainError(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * Fill "Evidence reviewed" from the pending attempt, whichever way the user
+   * arrived at Resolve.
+   *
+   * Hydrating only inside the Resolve page's own "Load case" click left the
+   * field empty for anyone who loaded the case on Inspect or Submit Retry and
+   * then switched pages — the side panel showed the case, the textarea did not.
+   * The evidence has to match the pending attempt byte for byte, so an empty
+   * field is not a blank to fill in by hand; it is a dead end.
+   */
+  const hydratedAttempt = useRef('');
+  useEffect(() => {
+    if (page !== 'resolve') return;
+    const current = caseData;
+    if (!current || current.status !== 'AWAITING_FRESH_DECISION' || !current.pending_attempt_id) return;
+    if (hydratedAttempt.current === current.pending_attempt_id) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const pending =
+          attemptData && attemptData.attempt_id === current.pending_attempt_id
+            ? attemptData
+            : await readJson<AttemptRecord>(contractAddress, 'get_attempt', [current.pending_attempt_id]);
+        if (cancelled || !pending) return;
+        hydratedAttempt.current = current.pending_attempt_id;
+        setFreshEvidence(pending.candidate_evidence.join('\n'));
+        setAttemptId(pending.attempt_id);
+        setAttemptData(pending);
+      } catch (error) {
+        if (!cancelled) setNotice(describeChainError(error));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [page, caseData, attemptData, contractAddress]);
+
+  async function reloadPendingEvidence() {
+    if (!caseData?.pending_attempt_id) {
+      setNotice('This case has no pending attempt to load evidence from.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const pending = await readJson<AttemptRecord>(contractAddress, 'get_attempt', [caseData.pending_attempt_id]);
+      if (!pending) throw new Error('Pending attempt not found in contract state.');
+      hydratedAttempt.current = pending.attempt_id;
+      setFreshEvidence(pending.candidate_evidence.join('\n'));
+      setAttemptId(pending.attempt_id);
+      setAttemptData(pending);
+      setNotice(`Loaded ${pending.candidate_evidence.length} evidence items from the pending attempt.`);
+    } catch (error) {
+      setNotice(describeChainError(error));
     } finally {
       setBusy(false);
     }
@@ -610,6 +669,16 @@ function App() {
                       placeholder="Pending candidate evidence will load from contract state"
                     />
                   </Field>
+                  <div className="evidenceSync">
+                    <button className="secondaryButton compact" disabled={busy} onClick={reloadPendingEvidence}>
+                      Reload evidence from pending attempt
+                    </button>
+                    <span>
+                      {freshEvidence.trim() === ''
+                        ? 'Empty — load it rather than typing it. The bytes must match the pending attempt exactly.'
+                        : `${linesToList(freshEvidence).length} items loaded from attempt ${short(caseData.pending_attempt_id)}.`}
+                    </span>
+                  </div>
                   <button className="primaryButton" disabled={busy || !isAuthority || !freshDecision} onClick={resolve}>
                     {freshDecision ? `Review fees & record fresh ${freshDecision.toLowerCase()} decision` : 'Choose a fresh decision'}
                   </button>
