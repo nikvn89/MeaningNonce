@@ -5,6 +5,7 @@
 ## Demo video
 
 **▶ Watch the demo: https://www.youtube.com/watch?v=YbeNXx8v-vw**
+**▶ Open the app: https://meaning-nonce.vercel.app** — reads need no wallet.
 
 One complete run against the deployed contract on GenLayer Studio Next: the
 authority records a rejection with its evidence baseline, the claimant makes five
