@@ -9,7 +9,6 @@ interface ImportMetaEnv {
   readonly VITE_EXPLORER_URL?: string;
   readonly VITE_RUNTIME_CASE_ID?: string;
   readonly VITE_ROLE_CASE_ID?: string;
-  readonly VITE_DEMO_VIDEO_URL?: string;
 }
 
 interface ImportMeta {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { SubmitInput, TrackedStatus } from '@genlayer/transaction-kit-react';
-import { DEFAULT_CONTRACT_ADDRESS, DEMO_VIDEO_URL, ROLE_GUARD_CASE_ID, RUNTIME_CASE_ID } from './config';
+import { DEFAULT_CONTRACT_ADDRESS, ROLE_GUARD_CASE_ID, RUNTIME_CASE_ID } from './config';
 import {
   connectWallet,
   describeChainError,
@@ -415,11 +415,6 @@ function App() {
           </span>
         </button>
         <div className="topActions">
-          {DEMO_VIDEO_URL && (
-            <a className="demoVideoLink" href={DEMO_VIDEO_URL} target="_blank" rel="noreferrer">
-              ▶ Demo video
-            </a>
-          )}
           <div className="contractMini">
             <span className={validAddress ? 'liveDot on' : 'liveDot'} />
             <div>
