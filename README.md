@@ -143,6 +143,19 @@ attempt bound to the sender, a fresh decision must leave no pending attempt.
 The protocol lives entirely in `contracts/MeaningNonce.py` and `src/App.tsx`, neither of which is
 shared with any other project.
 
+## Running the gates on any OS
+
+`npm run check` and `npm run verify:deployed` go through `scripts/py.mjs`, a
+dependency-free Node launcher that finds a Python 3 on the current platform
+(`py -3`, `python`, `python3`) and forwards the exit code. It exists because a
+hardcoded `python3` fails on Windows — where that name is usually just a
+Microsoft Store shortcut that runs nothing — while a hardcoded `python` fails on
+a default Ubuntu box. The reviewer runs the same command either way.
+
+`npm run gate:contract` and `npm run gate:schema` still call `python3.13`
+directly: they need the real py-genlayer SDK fetched by `scripts/setup_v03_sdk.sh`,
+which is a bash script, so that pair is POSIX-only by nature.
+
 ## Contract gates
 
 ```bash
