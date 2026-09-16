@@ -349,13 +349,3 @@ button,input,textarea,select{font-family:inherit}
   margin:-4px 0 2px;
 }
 .evidenceSync span{font-size:12px; line-height:1.5; color:#8794b3; flex:1; min-width:220px;}
-
-/* --- demo video link in the top bar --------------------------------------- */
-.topActions .demoVideoLink{
-  display:inline-flex; align-items:center; gap:6px;
-  height:52px; padding:0 16px; border-radius:12px;
-  font:600 13px/1 var(--sans, inherit); text-decoration:none;
-  color:#0b0e17; background:#8d67ff;
-  border:1px solid #8d67ff;
-}
-.topActions .demoVideoLink:hover{ background:#a184ff; border-color:#a184ff; }

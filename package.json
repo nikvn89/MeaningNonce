@@ -14,8 +14,9 @@
     "check:mutations": "python3 scripts/mutation_matrix.py contracts/MeaningNonce.py",
     "gate:contract": "python3 scripts/gate_v03_runtime.py contracts/MeaningNonce.py",
     "gate:schema": "python3 scripts/probe_v03_schema.py contracts/MeaningNonce.py",
-    "verify:deployed": "bash scripts/verify_deployed_source.sh",
-    "check": "npm run check:ast && npm run check:logic && npm run check:adversarial && npm run check:fence && npm run check:mutations && npm run build"
+    "verify:deployed": "python scripts/verify_deployed_source.py",
+    "check": "npm run check:ast && npm run check:logic && npm run check:adversarial && npm run check:fence && npm run check:mutations && npm run build",
+    "verify:deployed:sh": "bash scripts/verify_deployed_source.sh"
   },
   "dependencies": {
     "@genlayer/transaction-kit": "0.1.0-rc.2",

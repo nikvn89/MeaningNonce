@@ -111,8 +111,10 @@ Every case is created by the person testing it, so nothing depends on shared sta
   chain other than the one being read. The published SDK has no Studio Next preset, so the object
   is `studioDevnet` (Consensus v0.6 wiring, chain 61997) with the RPC moved to Studio Next.
 - **Fees.** Consensus v0.6 charges for writes, so every write goes through
-  `@genlayer/transaction-kit` — estimate, fee review, hold-to-sign, tracked status — instead of a
-  bare `writeContract`.
+  `@genlayer/transaction-kit` — estimate, fee review, sign, tracked status — instead of a bare
+  `writeContract`. The kit's signing control is press-and-hold on touch only: its handler returns
+  early when `event.pointerType === "mouse"`, so with a mouse a single click is the correct and
+  only gesture. Reviewers on a desktop should click, not hold.
 - **A decided transaction is not a success signal.** A failed deploy still walks
   `PENDING → PROPOSING → COMMITTING → REVEALING → ACCEPTED`. `src/TxGate.tsx` reports nothing as
   done until it has re-read contract state and found the postcondition it expected: the seed
@@ -125,6 +127,21 @@ Every case is created by the person testing it, so nothing depends on shared sta
 - **No showcase case IDs are hardcoded.** The previous build shipped two case IDs from the old
   StudioNet deployment; those records do not exist here. Set `VITE_RUNTIME_CASE_ID` and
   `VITE_ROLE_CASE_ID` only after creating and reading back the corresponding cases.
+
+## Shared integration layer
+
+`src/network.ts` and `src/genlayer.ts` are the same Consensus v0.6 wallet adapter used across my
+GenLayer submissions: connect a wallet, assert the chain id the SDK skips for Studio chains, read
+contract state, and re-read it after every write. `src/main.tsx` is the six-line Vite bootstrap and
+is identical to the one in my other entries. None of these carry protocol logic and none is claimed
+as novel.
+
+`src/TxGate.tsx` started from that shared adapter but the postconditions it enforces are specific to
+this contract: a seed must produce a case owned by the sender, a retry must create exactly one new
+attempt bound to the sender, a fresh decision must leave no pending attempt.
+
+The protocol lives entirely in `contracts/MeaningNonce.py` and `src/App.tsx`, neither of which is
+shared with any other project.
 
 ## Contract gates
 
