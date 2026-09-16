@@ -24,7 +24,8 @@ No logic, constant, prompt, fence or state-machine change. Redeployed at
 
 - `genlayer-js` 1.1.8 → 2.0.0-rc.1
 - writes moved to `@genlayer/transaction-kit` + `@genlayer/transaction-kit-react` 0.1.0-rc.2:
-  estimate → fee review → hold-to-sign → tracked status, because v0.6 charges fees
+  estimate → fee review → sign → tracked status, because v0.6 charges fees (the kit's
+  press-and-hold applies to touch only; with a mouse a single click is the gesture)
 - single network definition in `src/network.ts` shared by reads, MetaMask and the kit
 - added `ensureNetwork()`: genlayer-js skips its chain assertion for Studio chains, so the wallet's
   chain is now checked before anything is signed
