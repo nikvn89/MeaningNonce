@@ -4,15 +4,17 @@
 
 ## Demo video
 
-**▶ Watch the demo: https://www.youtube.com/watch?v=b9UQicWFo-k**
+**▶ Watch the demo: https://www.youtube.com/watch?v=YbeNXx8v-vw**
 
-A walkthrough of what the app does and a full run against the deployed contract
-on GenLayer Studio Next — seeding a rejected case, the four blocked retry paths,
-the one material delta that reopens it, and the authority's fresh decision.
+One complete run against the deployed contract on GenLayer Studio Next: the
+authority records a rejection with its evidence baseline, the claimant makes five
+retry attempts, and the authority issues a fresh decision. Four of those attempts
+are blocked — three of them without consulting a model at all.
 
-Every result in the video is read back from contract state before it is shown;
-the contract address and all transactions are public on the explorer linked
-below, and `npm run check` re-runs every offline gate against this exact source.
+Five attempts, two model calls. Every result in the video is read back from
+contract state before it is shown, the seven transactions are public on the
+explorer, and `npm run check` re-runs every offline gate against this exact
+source.
 
 
 MeaningNonce is a semantic anti-verdict-shopping primitive for GenLayer. It records a rejected
@@ -185,12 +187,37 @@ Migration reference: <https://docs.genlayer.com/developers/consensus-v06-migrati
 ## Verified demo case
 
 Studio Next contract: `0x8CB652d2a1d3E01DdD4eD1515F2c3F665c7D10b4`.
-Case reference: `WARRANTY-4417`.
-Case ID: `4aba8132a789596bd8662e967439e242b5681e5d3bcdccc9a21e1df55bbe5af6`.
-Latest attempt: `c1c69f44290ff7014108ef795a602c1c3cbfcdfe79f5a049e99d336d56dc1fc8`.
-Open Inspect Cases, paste the case ID, leave Attempt ID empty, and refresh contract state.
-Read-only inspection needs no wallet. The published app currently has no configured showcase buttons.
-The Verification page lists expected behaviours; it is not an executed runtime-proof archive.
+
+The case recorded in the demo video:
+
+```text
+case reference   WARRANTY-4420
+case id          d23479064540a5ecf21f214a64c5fe80696f433a3baa663511215b3f24df9186
+latest attempt   638b34081a3a20d7603731c80650bedd9c5e8d8067ad3857e54e92d6889c8cbe
+status           CLOSED_ACCEPTED   ·   decision ACCEPTED   ·   epoch 1
+attempts 5   ·   blocked 4   ·   model calls 2/3   ·   baseline items 4
+authority        0x627609…4657F4
+requester        0x146e44…95ec8e
+```
+
+The case id is not a random handle: it is derived from the authority address and
+the case reference. `Inspect Cases` has a **Derive case ID & load** box, so the
+case above can be reached from `0x6276095faea15108740445ff277fda8c304657f4` plus
+`WARRANTY-4420` without knowing the id at all.
+
+Open **Inspect Cases**, paste the case id, leave Attempt ID empty, and refresh
+contract state. Read-only inspection needs no wallet.
+
+The count that matters is `model calls 2/3` against `attempts 5`: three of the
+four blocked attempts never reached a model. `TESTING.md` maps each attempt to
+its transaction hash.
+
+An earlier run on this same contract,
+`4aba8132a789596bd8662e967439e242b5681e5d3bcdccc9a21e1df55bbe5af6`, reached the
+same final counters independently. Both are readable.
+
+The Verification page lists expected behaviours; it is not an executed
+runtime-proof archive.
 
 Source parity compares CRLF/CR as LF and one optional terminal LF only. The raw repository SHA256
 above remains unchanged. The deployed source has CRLF and omits the terminal newline; its canonical

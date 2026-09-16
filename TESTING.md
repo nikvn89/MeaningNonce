@@ -93,8 +93,8 @@ real GenVM and is not exercised offline:
 - `RETRY_BUDGET_EXHAUSTED`
 - `record_fresh_decision` and `CLOSED_ACCEPTED`
 
-These are exercised on Studio Next, through the dApp, and each result is read
-back from contract state before it is recorded.
+These were exercised on Studio Next through the dApp, in the run recorded below,
+with contract state re-read after every write.
 
 ---
 
@@ -113,26 +113,70 @@ formatting difference and still rejects every substantive source difference.
 
 ---
 
-## On-chain test procedure
+## On-chain run — EXECUTED
 
 Two wallets are required. `submit_retry` reverts with
 `AUTHORITY_CANNOT_SUBMIT_RETRY` when the sender is the case authority, so a
 single wallet cannot walk the flow. Both need GEN on Studio Next for fees.
 
-| Step | Wallet | Action | Expected |
-|---|---|---|---|
-| 1 | A | `seed_rejected_case` with 2 baseline items | `LOCKED_REJECTED`, authority = A |
-| 2 | B | `submit_retry`, baseline unchanged, new wording | `EXACT_REPLAY`, `model_called=false` |
-| 3 | B | add one trivial item | `IMMATERIAL_DELTA`, `model_called=true`, `model_calls_this_epoch=1` |
-| 4 | B | same evidence as step 3, different wording | `ALREADY_ADJUDICATED`, `model_calls_this_epoch` still 1 |
-| 5 | B | drop a baseline item | `BASELINE_REMOVAL_BLOCKED`, baseline unchanged |
-| 6 | B | add genuinely new material evidence | `MATERIAL_DELTA` → `AWAITING_FRESH_DECISION` |
-| 7 | A | `record_fresh_decision` ACCEPTED, evidence identical to step 6 | `CLOSED_ACCEPTED`, `attempt_count = 5` |
-| 8 | A | retry on the closed case | `CASE_NOT_RETRYABLE` |
+```text
+case reference  WARRANTY-4420
+case id         d23479064540a5ecf21f214a64c5fe80696f433a3baa663511215b3f24df9186
+latest attempt  638b34081a3a20d7603731c80650bedd9c5e8d8067ad3857e54e92d6889c8cbe
+authority       0x627609…4657F4        requester   0x146e44…95ec8e
+```
 
-Step 4 is the one worth being careful with: the cache key hashes the evidence
-set, **not** the request text. Changing both puts the call back on the model
-path instead of the cached path.
+| # | Wallet | Action | Result | Model called | Model calls after |
+|---|---|---|---|---|---|
+| 1 | A | `seed_rejected_case`, 2 baseline items | `LOCKED_REJECTED`, authority = A | — | 0/3 |
+| 2 | B | `submit_retry`, baseline unchanged, new wording | `EXACT_REPLAY` | **No** | 0/3 |
+| 3 | B | add one item that restates what is on file | `IMMATERIAL_DELTA` | Yes | 1/3 |
+| 4 | B | same evidence as step 3, different wording | `ALREADY_ADJUDICATED` | **No** | 1/3 |
+| 5 | B | drop a baseline item | `BASELINE_REMOVAL_BLOCKED`, baseline unchanged | **No** | 1/3 |
+| 6 | B | add two third-party records that predate the sign-off | `MATERIAL_DELTA` → `AWAITING_FRESH_DECISION` | Yes | 2/3 |
+| 7 | A | `record_fresh_decision` ACCEPTED, evidence identical to step 6 | `CLOSED_ACCEPTED` | — | 2/3 |
+| 8 | — | retry on the closed case | refused by the interface; no transaction sent | — | 2/3 |
+
+Final durable state, read back from the contract:
+
+```text
+status                  CLOSED_ACCEPTED
+epoch                   1
+attempt_count           5
+blocked_count           4
+model_calls_this_epoch  2
+baseline items          4      (replaced by the accepted evidence set)
+```
+
+Five attempts, two model calls. Steps 2, 4 and 5 were blocked without consulting
+a model; only steps 3 and 6 reached consensus.
+
+### Transactions — all FINALIZED
+
+```text
+1  seed_rejected_case          A  0x51304fbcb14d1744c054d05cb09c5b395dcd4ff675123e5ac8ba445bd588b17a
+2  submit_retry · replay       B  0x6ea64c62ba4e155ee9466018a2b019646e694dfac1746bf2f5266a7da0350da6
+3  submit_retry · immaterial   B  0x5bef69ee82bf29c9ee75e0e300e00f1c604c36bf8118087a0349b4326d2e09f0
+4  submit_retry · adjudicated  B  0x567ad2bdc594c201b522e1055cce4153b9c7d58a12fdb6d38f4e7e762f227892
+5  submit_retry · removal      B  0x5089e0d9c01b0f8e0b8c592ce44e9f9d496edd0d502e53e951f801c2908c408b
+6  submit_retry · material     B  0x33878838362419e27a1f93692694dba15046b4fdd877c793175491b2faa3c463
+7  record_fresh_decision       A  0x40a07b92e2dcee78efb100a6602d7a4f21e6c9734be510566183b5f79700a8bc
+```
+
+Step 8 sends nothing: on a `CLOSED_ACCEPTED` case the submit control is disabled,
+so `CASE_NOT_RETRYABLE` is covered by the offline suites rather than by a
+deliberately failed transaction on chain.
+
+### What this run does NOT prove
+
+`RETRY_BUDGET_EXHAUSTED` and `grant_retry_budget` were not exercised on chain:
+this run spent 2 of 3 calls and never hit the cap. Both are covered by
+`check:logic` and `check:adversarial`, which is offline coverage, not on-chain
+coverage, and this section does not present it as such.
+
+Step 4 is the one worth reading twice: the cache key hashes the evidence set,
+**not** the request text. That is why a complete rewrite of the wording bought
+nothing and the counter stayed at 1/3.
 
 Step 7 canonicalizes `evidence_json` and requires its evidence hashes to match
 the pending attempt. Evidence order and duplicate representations do not create
