@@ -11,3 +11,11 @@ export const DEFAULT_CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS |
  */
 export const RUNTIME_CASE_ID = import.meta.env.VITE_RUNTIME_CASE_ID || '';
 export const ROLE_GUARD_CASE_ID = import.meta.env.VITE_ROLE_CASE_ID || '';
+
+/**
+ * Public demo video. A reviewer looks for this in three places — the submission
+ * entry, the repository README, and the live app — so it is surfaced here as a
+ * link in the top bar rather than living only in a form field.
+ */
+export const DEMO_VIDEO_URL =
+  import.meta.env.VITE_DEMO_VIDEO_URL || 'https://www.youtube.com/watch?v=b9UQicWFo-k';

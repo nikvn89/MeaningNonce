@@ -2,6 +2,19 @@
 
 **Changing the wording is not a new case.**
 
+## Demo video
+
+**▶ Watch the demo: https://www.youtube.com/watch?v=b9UQicWFo-k**
+
+A walkthrough of what the app does and a full run against the deployed contract
+on GenLayer Studio Next — seeding a rejected case, the four blocked retry paths,
+the one material delta that reopens it, and the authority's fresh decision.
+
+Every result in the video is read back from contract state before it is shown;
+the contract address and all transactions are public on the explorer linked
+below, and `npm run check` re-runs every offline gate against this exact source.
+
+
 MeaningNonce is a semantic anti-verdict-shopping primitive for GenLayer. It records a rejected
 decision together with its evidence baseline on-chain. A retry that carries no new evidence is
 blocked deterministically without a materiality-model call. The retry still submits a paid write
